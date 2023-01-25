@@ -10,7 +10,7 @@ Another goal is to support machine learning potentials, similar to [openmm-torch
 
 TODO: Make the actual plugin and provide build instructions.
 
-OpenMM's current energy minimizer hard-codes checks for the `CUDA`, `OpenCL`, and `HIP` platforms. The Metal backend is currently labeled `HIP` everywhere to bypass this limitation. The plugin name will change to `Metal` once OpenMM provides integration internally. To prevent source-breaking changes, check for both the `HIP` and `Metal` backends in your source code.
+OpenMM's current energy minimizer hard-codes checks for the `CUDA`, `OpenCL`, and `HIP` platforms. The Metal backend is currently labeled `HIP` everywhere to bypass this limitation. The plugin name will change to `Metal` once OpenMM provides integration internally. To prevent source-breaking changes, check for both the `HIP` and `Metal` backends in your client code.
 
 ## License
 
