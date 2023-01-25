@@ -6,6 +6,12 @@ The Metal plugin will eventually transition most code directly to the Metal API.
 
 Another goal is to support machine learning potentials, similar to [openmm-torch](https://github.com/openmm/openmm-torch). This repository should provide a more direct pathway to [MPSGraph](https://developer.apple.com/documentation/metalperformanceshadersgraph), the high-level MLIR compiler harnessed by tensorflow-metal and PyTorch. The plugin may create API for extracting the `MTLBuffer` backing an OpenMM class. The ML potential (written in C++) should be made accessible from Swift - the language for using MPSGraph. Swift code will access all other OpenMM APIs through [PythonKit](https://github.com/pvieito/PythonKit).
 
+## Usage
+
+TODO: Make the actual plugin and provide build instructions.
+
+OpenMM's current energy minimizer hard-codes checks for the `CUDA`, `OpenCL`, and `HIP` platforms. The Metal backend is currently labeled `HIP` everywhere to bypass this limitation. The plugin name will change to `Metal` once OpenMM provides integration internally. To prevent source-breaking changes, check for both the `HIP` and `Metal` backends in your source code.
+
 ## License
 
 The Metal Platform uses OpenMM API under the terms of the MIT License.  A copy of this license may
