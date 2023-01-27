@@ -5,7 +5,6 @@
 #
 # macOS:
 #   libOpenMMMetal.dylib
-#   libOpenMMMetal_static.a
 #----------------------------------------------------
 
 set(OPENMM_BUILD_OPENCL_TESTS TRUE CACHE BOOL "Whether to build OpenCL test cases")
@@ -15,7 +14,7 @@ endif(BUILD_TESTING AND OPENMM_BUILD_OPENCL_TESTS)
 
 # The source is organized into subdirectories, but we handle them all from
 # this CMakeLists file rather than letting CMake visit them as SUBDIRS.
-SET(OPENMM_SOURCE_SUBDIRS . ../common)
+SET(OPENMM_SOURCE_SUBDIRS ${CMAKE_CURRENT_SOURCE_DIR} ${OPENMM_SOURCE_DIR}/platforms/common)
 
 
 # Collect up information about the version of the OpenMM library we're building
@@ -24,8 +23,6 @@ SET(OPENMM_SOURCE_SUBDIRS . ../common)
 SET(OPENMMOPENCL_LIBRARY_NAME OpenMMMetal)
 
 SET(SHARED_TARGET ${OPENMMOPENCL_LIBRARY_NAME})
-SET(STATIC_TARGET ${OPENMMOPENCL_LIBRARY_NAME}_static)
-
 
 # These are all the places to search for header files which are
 # to be part of the API.
@@ -33,8 +30,8 @@ SET(API_INCLUDE_DIRS) # start empty
 FOREACH(subdir ${OPENMM_SOURCE_SUBDIRS})
     # append
     SET(API_INCLUDE_DIRS ${API_INCLUDE_DIRS}
-                         ${CMAKE_CURRENT_SOURCE_DIR}/${subdir}/include
-                         ${CMAKE_CURRENT_SOURCE_DIR}/${subdir}/include/internal)
+                         ${subdir}/include
+                         ${subdir}/include/internal)
 ENDFOREACH(subdir)
 
 # We'll need both *relative* path names, starting with their API_INCLUDE_DIRS,
@@ -76,10 +73,9 @@ SET(KERNEL_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 SET(KERNEL_SOURCE_CLASS OpenCLKernelSources)
 SET(KERNELS_CPP ${CMAKE_CURRENT_BINARY_DIR}/src/${KERNEL_SOURCE_CLASS}.cpp)
 SET(KERNELS_H ${CMAKE_CURRENT_BINARY_DIR}/src/${KERNEL_SOURCE_CLASS}.h)
-SET(COMMON_KERNELS_CPP ${CMAKE_CURRENT_BINARY_DIR}/../common/src/CommonKernelSources.cpp)
+SET(COMMON_KERNELS_CPP ${CMAKE_CURRENT_BINARY_DIR}/CommonKernelSources.cpp)
 SET(SOURCE_FILES ${SOURCE_FILES} ${KERNELS_CPP} ${KERNELS_H} ${COMMON_KERNELS_CPP})
 INCLUDE_DIRECTORIES(BEFORE ${CMAKE_CURRENT_BINARY_DIR}/src)
-INCLUDE_DIRECTORIES(BEFORE ${CMAKE_CURRENT_BINARY_DIR}/../common/src)
 
 # Install headers
 

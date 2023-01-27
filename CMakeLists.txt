@@ -71,8 +71,8 @@ ENDIF()
 SET(EXTRA_COMPILE_FLAGS "${EXTRA_COMPILE_FLAGS} -stdlib=libc++")
 
 # What type of libraries to build
-SET(OPENMM_BUILD_SHARED_LIB ON CACHE BOOL "Whether to build shared OpenMM libraries")
-SET(OPENMM_BUILD_STATIC_LIB OFF CACHE BOOL "Whether to build static OpenMM libraries")
+SET(OPENMM_BUILD_SHARED_LIB ON)
+SET(OPENMM_BUILD_STATIC_LIB OFF)
 
 SET(OPENMM_LIBRARY_NAME OpenMM)
 

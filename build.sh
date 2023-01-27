@@ -77,7 +77,7 @@ openmm_include_dir="${openmm_parent_dir}/include"
 # libOpenMMDrudeMetal.dylib
 # libOpenMMRPMDMetal.dylib
 
-cmake ..
+cmake .. -DOPENMM_DIR=${openmm_parent_dir}
 
 # TODO:
 # Embed the binaries into a supermassive Bash script, just like other GitHub

@@ -1,24 +1,24 @@
 #---------------------------------------------------
-# OpenMM OpenCL RPMD Integrator
+# OpenMM Metal RPMD Integrator
 #
-# Creates OpenMMRPMDOpenCL library.
+# Creates OpenMMRPMDMetal library.
 #
-# Windows:
-#   OpenMMRPMDOpenCL.dll
-#   OpenMMRPMDOpenCL.lib
-# Unix:
-#   libOpenMMRPMDOpenCL.so
+# macOS:
+#   libOpenMMRPMDMetal.dylib
 #----------------------------------------------------
+
+SET(OPENMM_RPMD_LIBRARY_NAME OpenMMRPMD)
+SET(SHARED_RPMD_TARGET ${OPENMM_RPMD_LIBRARY_NAME})
 
 # The source is organized into subdirectories, but we handle them all from
 # this CMakeLists file rather than letting CMake visit them as SUBDIRS.
-SET(OPENMM_SOURCE_SUBDIRS . ../common)
+SET(OPENMM_SOURCE_SUBDIRS ${CMAKE_CURRENT_SOURCE_DIR} ${OPENMM_SOURCE_DIR}/plugins/rpmd/platforms/common)
 
 
 # Collect up information about the version of the OpenMM library we're building
 # and make it available to the code so it can be built into the binaries.
 
-SET(OPENMMRPMDOPENCL_LIBRARY_NAME OpenMMRPMDOpenCL)
+SET(OPENMMRPMDOPENCL_LIBRARY_NAME OpenMMRPMDMetal)
 
 SET(SHARED_TARGET ${OPENMMRPMDOPENCL_LIBRARY_NAME})
 
@@ -28,8 +28,8 @@ SET(API_INCLUDE_DIRS) # start empty
 FOREACH(subdir ${OPENMM_SOURCE_SUBDIRS})
     # append
     SET(API_INCLUDE_DIRS ${API_INCLUDE_DIRS}
-                         ${CMAKE_CURRENT_SOURCE_DIR}/${subdir}/include
-                         ${CMAKE_CURRENT_SOURCE_DIR}/${subdir}/include/internal)
+                         ${subdir}/include
+                         ${subdir}/include/internal)
 ENDFOREACH(subdir)
 
 # We'll need both *relative* path names, starting with their API_INCLUDE_DIRS,
@@ -59,17 +59,14 @@ FOREACH(subdir ${OPENMM_SOURCE_SUBDIRS})
     INCLUDE_DIRECTORIES(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/${subdir}/include)
 ENDFOREACH(subdir)
 
-SET(COMMON_KERNELS_CPP ${CMAKE_CURRENT_BINARY_DIR}/../common/src/CommonRpmdKernelSources.cpp)
+SET(COMMON_KERNELS_CPP ${CMAKE_CURRENT_BINARY_DIR}/src/CommonRpmdKernelSources.cpp)
 SET(SOURCE_FILES ${SOURCE_FILES} ${COMMON_KERNELS_CPP})
 
 INCLUDE_DIRECTORIES(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-INCLUDE_DIRECTORIES(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/../common/src)
-INCLUDE_DIRECTORIES(BEFORE ${CMAKE_SOURCE_DIR}/platforms/opencl/include)
-INCLUDE_DIRECTORIES(BEFORE ${CMAKE_SOURCE_DIR}/platforms/opencl/src)
-INCLUDE_DIRECTORIES(BEFORE ${CMAKE_BINARY_DIR}/platforms/opencl/src)
-INCLUDE_DIRECTORIES(BEFORE ${CMAKE_SOURCE_DIR}/platforms/common/include)
-INCLUDE_DIRECTORIES(BEFORE ${CMAKE_BINARY_DIR}/platforms/common/src)
-INCLUDE_DIRECTORIES(BEFORE ${CMAKE_CURRENT_BINARY_DIR}/../common/src)
+INCLUDE_DIRECTORIES(BEFORE ${OPENMM_SOURCE_DIR}/plugins/rpmd/platforms/common/src)
+INCLUDE_DIRECTORIES(BEFORE ${CMAKE_SOURCE_DIR}/platforms/metal/include)
+INCLUDE_DIRECTORIES(BEFORE ${CMAKE_BINARY_DIR}/platforms/metal/src)
+INCLUDE_DIRECTORIES(BEFORE ${CMAKE_CURRENT_BINARY_DIR}/src)
 
 # Create the library
 
@@ -80,14 +77,14 @@ ADD_LIBRARY(${SHARED_TARGET} SHARED ${SOURCE_FILES} ${SOURCE_INCLUDE_FILES} ${AP
 ADD_DEPENDENCIES(${SHARED_TARGET} RpmdCommonKernels)
 
 TARGET_LINK_LIBRARIES(${SHARED_TARGET} ${OPENMM_LIBRARY_NAME}  ${OPENCL_LIBRARIES} ${PTHREADS_LIB})
-TARGET_LINK_LIBRARIES(${SHARED_TARGET} ${OPENMM_LIBRARY_NAME}OpenCL)
+TARGET_LINK_LIBRARIES(${SHARED_TARGET} ${OPENMM_LIBRARY_NAME}Metal)
 TARGET_LINK_LIBRARIES(${SHARED_TARGET} ${SHARED_RPMD_TARGET})
 SET_TARGET_PROPERTIES(${SHARED_TARGET} PROPERTIES LINK_FLAGS "${EXTRA_LINK_FLAGS}" COMPILE_FLAGS "${EXTRA_COMPILE_FLAGS} -DOPENMM_BUILDING_SHARED_LIBRARY")
 
 INSTALL(TARGETS ${SHARED_TARGET} DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/plugins)
 # Ensure that links to the main OpenCL library will be resolved.
 IF (APPLE)
-    SET(OPENCL_LIBRARY libOpenMMOpenCL.dylib)
+    SET(OPENCL_LIBRARY libOpenMMMetal.dylib)
     INSTALL(CODE "EXECUTE_PROCESS(COMMAND install_name_tool -change ${OPENCL_LIBRARY} @loader_path/${OPENCL_LIBRARY} ${CMAKE_INSTALL_PREFIX}/lib/plugins/lib${SHARED_TARGET}.dylib)")
 ENDIF (APPLE)
 if(OPENMM_BUILD_OPENCL_TESTS)
