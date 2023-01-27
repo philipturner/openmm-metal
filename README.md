@@ -8,7 +8,7 @@ Another goal is to support machine learning potentials, similar to [openmm-torch
 
 ## Usage
 
-TODO: Make the actual plugin and provide build instructions. Use a Shell script instead of messing with the complexity of CMake; call directly into `clang++`.
+TODO: Finish the actual plugin and provide install instructions.
 
 OpenMM's current energy minimizer hard-codes checks for the `CUDA`, `OpenCL`, and `HIP` platforms. The Metal backend is currently labeled `HIP` everywhere to bypass this limitation. The plugin name will change to `Metal` once OpenMM provides integration internally. To prevent source-breaking changes, check for both the `HIP` and `Metal` backends in your client code.
 
