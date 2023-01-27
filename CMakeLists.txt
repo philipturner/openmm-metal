@@ -10,11 +10,14 @@ ENABLE_TESTING()
 
 set(CMAKE_INSTALL_PREFIX /usr/local/openmm)
 
-# We have custom cmake modules for FindOpenMM and running python tests
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake_modules")
+# We need to know where OpenMM is installed so we can access the headers and libraries.
+SET(OPENMM_DIR "/usr/local/openmm" CACHE PATH "Where OpenMM is installed")
+
+# We need to know where OpenMM source code is located so we can access required files.
+SET(OPENMM_SOURCE_DIR "${CMAKE_SOURCE_DIR}/../openmm" CACHE PATH "Where OpenMM source code is located")
 
 # Determine what architecture we are compiling for.
-INCLUDE(TargetArch)
+INCLUDE(${OPENMM_SOURCE_DIR}/cmake_modules/TargetArch.cmake)
 target_architecture(TARGET_ARCH)
 if ("${TARGET_ARCH}" MATCHES "x86_64|i386")
     set(X86 ON)
@@ -32,12 +35,6 @@ if ("${TARGET_ARCH}" MATCHES "ppc")
     add_definitions(-D__PPC__=1)
 endif()
 
-# We need to know where OpenMM is installed so we can access the headers and libraries.
-SET(OPENMM_DIR "/usr/local/openmm" CACHE PATH "Where OpenMM is installed")
-
-# We need to know where OpenMM source code is located so we can access required files.
-SET(OPENMM_SOURCE_DIR "${CMAKE_SOURCE_DIR}/../openmm" CACHE PATH "Where OpenMM source code is located")
-
 INCLUDE_DIRECTORIES(${OPENMM_DIR}/include)
 INCLUDE_DIRECTORIES(${OPENMM_DIR}/include/openmm/reference)
 LINK_DIRECTORIES("${OPENMM_DIR}/lib" "${OPENMM_DIR}/lib/plugins")
@@ -47,9 +44,9 @@ SET(PTHREADS_LIB pthread)
 # Specify the C++ version we are building for.
 SET(CMAKE_CXX_STANDARD 11)
 
-# Build 64 bit binaries compatible with OS X 10.7
+# Build 64 bit binaries compatible with OS X 12.0
 IF (NOT CMAKE_OSX_DEPLOYMENT_TARGET)
-    SET (CMAKE_OSX_DEPLOYMENT_TARGET "10.7" CACHE STRING "The minimum version of OS X to support" FORCE)
+    SET (CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE STRING "The minimum version of OS X to support" FORCE)
 ENDIF (NOT CMAKE_OSX_DEPLOYMENT_TARGET)
 IF (NOT CMAKE_OSX_ARCHITECTURES)
     SET (CMAKE_OSX_ARCHITECTURES "${CMAKE_SYSTEM_PROCESSOR}" CACHE STRING "The processor architectures to build for" FORCE)

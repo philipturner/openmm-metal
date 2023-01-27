@@ -51,7 +51,7 @@ fi
 
 # Extract OpenMM install location.
 # WARNING: The machine building this must link against the same location as you
-# would expect on client machines.
+# would expect on client machines. The location seems different on x86_64.
 echo '
 import openmm
 import os
@@ -78,6 +78,8 @@ openmm_include_dir="${openmm_parent_dir}/include"
 # libOpenMMRPMDMetal.dylib
 
 cmake .. -DOPENMM_DIR=${openmm_parent_dir}
+# make -j4
+make
 
 # TODO:
 # Embed the binaries into a supermassive Bash script, just like other GitHub
