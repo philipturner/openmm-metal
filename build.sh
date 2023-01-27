@@ -71,6 +71,17 @@ openmm_parent_dir=`cat python_messaging.txt`
 openmm_lib_dir="${openmm_parent_dir}/lib"
 openmm_include_dir="${openmm_parent_dir}/include"
 
-# TODO: Use 'lipo' to merge both binaries into one file.
-# https://developer.apple.com/documentation/apple-silicon/building-a-universal-macos-binary
-# This doubles shader size and inline shader strings, but it's fine...
+# Need:
+# libOpenMMMetal.dylib
+# libOpenMMAmoebaMetal.dylib
+# libOpenMMDrudeMetal.dylib
+# libOpenMMRPMDMetal.dylib
+
+cmake ..
+
+# TODO:
+# Embed the binaries into a supermassive Bash script, just like other GitHub
+# packages. This prevents needing to mess with cross-compilation.
+
+# TODO:
+# Give security-conscious users the ability to install from source.
