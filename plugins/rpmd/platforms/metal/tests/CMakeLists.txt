@@ -4,7 +4,7 @@
 
 ENABLE_TESTING()
 
-INCLUDE_DIRECTORIES(${OPENMM_DIR}/plugins/rpmd/tests)
+INCLUDE_DIRECTORIES(${OPENMM_SOURCE_DIR}/plugins/rpmd/tests)
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/platforms/metal/tests)
 
 # Automatically create tests using files named "Test*.cpp"

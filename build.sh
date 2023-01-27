@@ -1,7 +1,11 @@
 #!/bin/bash
 
-if [[ -d "./build" ]]; then
+if [[ ! -d ".build" ]]; then
     mkdir ".build"
+fi
+if [[ ! -d ".build" ]]; then
+    echo "Malformed .build directory"
+    exit -1
 fi
 cd ".build"
 touch "python_messaging.txt"
@@ -77,9 +81,15 @@ openmm_include_dir="${openmm_parent_dir}/include"
 # libOpenMMDrudeMetal.dylib
 # libOpenMMRPMDMetal.dylib
 
-cmake .. -DOPENMM_DIR=${openmm_parent_dir}
+# TODO: Switch to the correct path after debugging this error.
+# -DCMAKE_INSTALL_PREFIX="/usr/local/openmm"
+if [[ ! -d install ]]; then
+    mkdir install
+fi
+
+cmake .. -DCMAKE_INSTALL_PREFIX="$(pwd)/install" -DOPENMM_DIR=${openmm_parent_dir}
 # make -j4
-make
+make # -d VERBOSE=1
 
 # TODO:
 # Embed the binaries into a supermassive Bash script, just like other GitHub

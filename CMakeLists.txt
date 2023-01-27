@@ -8,7 +8,15 @@ PROJECT(OpenMMMetalPlugin)
 
 ENABLE_TESTING()
 
-set(CMAKE_INSTALL_PREFIX /usr/local/openmm)
+# It seems that on linux and mac, everything is trying to be installed in /usr/local/openmm
+# But if every install target is prefixed with /openmm/, on Windows the install files
+# end up in C:/Program Files/OpenMM/openmm/ which is ugly.
+# Better to set CMAKE_INSTALL_PREFIX to /usr/local/openmm and leave /openmm/ off the
+# install target names.  Plus, the user now has the opportunity to install into /usr/local/
+# if she so chooses.  --cmb
+IF(${CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT})
+  SET(CMAKE_INSTALL_PREFIX ${OPENMM_INSTALL_PREFIX} CACHE PATH "Where to install OpenMM" FORCE)
+ENDIF(${CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT})
 
 # We need to know where OpenMM is installed so we can access the headers and libraries.
 SET(OPENMM_DIR "/usr/local/openmm" CACHE PATH "Where OpenMM is installed")
@@ -66,6 +74,7 @@ IF (X86)
   SET(EXTRA_COMPILE_FLAGS "-msse2")
 ENDIF()
 SET(EXTRA_COMPILE_FLAGS "${EXTRA_COMPILE_FLAGS} -stdlib=libc++")
+SET(EXTRA_LINK_FLAGS ${EXTRA_COMPILE_FLAGS})
 
 # What type of libraries to build
 SET(OPENMM_BUILD_SHARED_LIB ON)
@@ -73,10 +82,10 @@ SET(OPENMM_BUILD_STATIC_LIB OFF)
 
 SET(OPENMM_LIBRARY_NAME OpenMM)
 
-SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}
-  CACHE INTERNAL "Single output directory for building all executables.")
-SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}
-  CACHE INTERNAL "Single output directory for building all libraries.")
+IF(NOT EXECUTABLE_OUTPUT_PATH)
+  SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}
+      CACHE INTERNAL "Single output directory for building all executables.")
+ENDIF(NOT EXECUTABLE_OUTPUT_PATH)
 
 # Include OpenMM utiliity libraries
 SET(OPENMM_LIB_SUBDIRS libraries/jama libraries/quern libraries/hilbert libraries/csha1 libraries/lbfgs libraries/pocketfft)

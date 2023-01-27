@@ -4,8 +4,8 @@
 
 ENABLE_TESTING()
 
-INCLUDE_DIRECTORIES(${OPENMM_DIR}/plugins/amoeba/tests)
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/platforms/opencl/tests)
+INCLUDE_DIRECTORIES(${OPENMM_SOURCE_DIR}/plugins/amoeba/tests)
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/platforms/metal/tests)
 
 # Automatically create tests using files named "Test*.cpp"
 FILE(GLOB TEST_PROGS "*Test*.cpp")
