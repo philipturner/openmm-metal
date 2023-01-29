@@ -30,13 +30,13 @@
  * -------------------------------------------------------------------------- */
 
 /**
- * This tests the OpenCL implementation of sorting.
+ * This tests the Metal implementation of sorting.
  */
 
 #include "openmm/internal/AssertionUtilities.h"
-#include "OpenCLArray.h"
-#include "OpenCLContext.h"
-#include "OpenCLSort.h"
+#include "MetalArray.h"
+#include "MetalContext.h"
+#include "MetalSort.h"
 #include "sfmt/SFMT.h"
 #include "openmm/System.h"
 #include <iostream>
@@ -46,9 +46,9 @@
 using namespace OpenMM;
 using namespace std;
 
-static OpenCLPlatform platform;
+static MetalPlatform platform;
 
-class SortTrait : public OpenCLSort::SortTrait {
+class SortTrait : public MetalSort::SortTrait {
     int getDataSize() const {return 4;}
     int getKeySize() const {return 4;}
     const char* getDataType() const {return "float";}
@@ -64,12 +64,12 @@ void verifySorting(vector<float> array, bool uniform) {
 
     System system;
     system.addParticle(0.0);
-    OpenCLPlatform::PlatformData platformData(system, "", "", platform.getPropertyDefaultValue("OpenCLPrecision"), "false", "false", 1, NULL);
-    OpenCLContext& context = *platformData.contexts[0];
+    MetalPlatform::PlatformData platformData(system, "", "", platform.getPropertyDefaultValue("MetalPrecision"), "false", "false", 1, NULL);
+    MetalContext& context = *platformData.contexts[0];
     context.initialize();
-    OpenCLArray data(context, array.size(), sizeof(float), "sortData");
+    MetalArray data(context, array.size(), sizeof(float), "sortData");
     data.upload(array);
-    OpenCLSort sort(context, new SortTrait(), array.size(), uniform);
+    MetalSort sort(context, new SortTrait(), array.size(), uniform);
     sort.sort(data);
     vector<float> sorted;
     data.download(sorted);
@@ -122,7 +122,7 @@ void testShortList() {
 int main(int argc, char* argv[]) {
     try {
         if (argc > 1)
-            platform.setPropertyDefaultValue("OpenCLPrecision", string(argv[1]));
+            platform.setPropertyDefaultValue("MetalPrecision", string(argv[1]));
         testUniformValues();
         testLogValues();
         testShortList();

@@ -29,7 +29,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "OpenCLDrudeTests.h"
+#include "MetalDrudeTests.h"
 #include "TestDrudeSCFIntegrator.h"
 
 void runPlatformTests() {}

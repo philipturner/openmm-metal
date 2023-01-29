@@ -32,7 +32,7 @@
 #define CL_HPP_ENABLE_EXCEPTIONS
 #define CL_HPP_TARGET_OPENCL_VERSION 120
 #define CL_HPP_MINIMUM_OPENCL_VERSION 120
-#include "OpenCLTests.h"
+#include "MetalTests.h"
 #include "TestNonbondedForce.h"
 #include "opencl.hpp"
 #include <string>
@@ -75,10 +75,10 @@ void testParallelComputation(NonbondedForce::NonbondedMethod method) {
     VerletIntegrator integrator2(0.01);
 
     map<string, string> props;
-    string deviceIndex = platform.getPropertyValue(context1, OpenCLPlatform::OpenCLDeviceIndex());
-    props[OpenCLPlatform::OpenCLDeviceIndex()] = deviceIndex+","+deviceIndex;
-    string platformIndex = platform.getPropertyValue(context1, OpenCLPlatform::OpenCLPlatformIndex());
-    props[OpenCLPlatform::OpenCLPlatformIndex()] = platformIndex;
+    string deviceIndex = platform.getPropertyValue(context1, MetalPlatform::MetalDeviceIndex());
+    props[MetalPlatform::MetalDeviceIndex()] = deviceIndex+","+deviceIndex;
+    string platformIndex = platform.getPropertyValue(context1, MetalPlatform::MetalPlatformIndex());
+    props[MetalPlatform::MetalPlatformIndex()] = platformIndex;
 
     Context context2(system, integrator2, platform, props);
     context2.setPositions(positions);
@@ -140,8 +140,8 @@ bool canRunHugeTest() {
     system.addParticle(1.0);
     VerletIntegrator integrator(1.0);
     Context context(system, integrator, platform);
-    int platformIndex = stoi(platform.getPropertyValue(context, OpenCLPlatform::OpenCLPlatformIndex()));
-    int deviceIndex = stoi(platform.getPropertyValue(context, OpenCLPlatform::OpenCLDeviceIndex()));
+    int platformIndex = stoi(platform.getPropertyValue(context, MetalPlatform::MetalPlatformIndex()));
+    int deviceIndex = stoi(platform.getPropertyValue(context, MetalPlatform::MetalDeviceIndex()));
 
     // Find out how much memory the device has.
 

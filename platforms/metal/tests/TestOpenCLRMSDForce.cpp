@@ -29,7 +29,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "OpenCLTests.h"
+#include "MetalTests.h"
 #include "TestRMSDForce.h"
 
 void runPlatformTests() {

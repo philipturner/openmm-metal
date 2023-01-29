@@ -2,7 +2,7 @@
  * file has_opencl_gpu.c 
  * created May 6, 2010
  * by Christopher Bruns
- * Returns zero if an OpenCL-capable GPU is found.
+ * Returns zero if an Metal-capable GPU is found.
  * Returns one otherwise.
  */
 
@@ -15,8 +15,8 @@
 #include <stdio.h>
 
 /* 
- * check_devices() looks for a GPU among all OpenCL devices 
- * in a particular OpenCL platform.
+ * check_devices() looks for a GPU among all Metal devices 
+ * in a particular Metal platform.
  * Returns zero if a GPU is found.  Returns one otherwise.
  */
 int check_devices(cl_platform_id platform_id) 
@@ -42,7 +42,7 @@ int check_devices(cl_platform_id platform_id)
                 printf(" CL_INVALID_VALUE; num_entries is equal to zero and device_type is not NULL or if both num_devices and device_type  are NULL.\n");
                 break;
             case CL_DEVICE_NOT_FOUND :
-                printf(" CL_DEVICE_NOT_FOUND; no OpenCL devices that matched device_type were found.\n");
+                printf(" CL_DEVICE_NOT_FOUND; no Metal devices that matched device_type were found.\n");
                 break;
             default :
                 printf(" unrecognized error code '%d'\n", err);
@@ -71,7 +71,7 @@ int main(int argc, char** argv)
     /* Investigate all valid platform IDs */
     err = clGetPlatformIDs(10, platforms, &num_platforms);
     if (num_platforms < 1) {
-        printf("No OpenCL platforms found.\n");
+        printf("No Metal platforms found.\n");
         return 1;
     }
     for (p = 0; p < num_platforms; ++p) {

@@ -30,13 +30,13 @@
  * -------------------------------------------------------------------------- */
 
 /**
- * This tests a system with multiple forces, to make sure OpenCLBondedUtilities is
+ * This tests a system with multiple forces, to make sure MetalBondedUtilities is
  * processing them correctly.
  */
 
 #include "openmm/internal/AssertionUtilities.h"
 #include "openmm/Context.h"
-#include "OpenCLPlatform.h"
+#include "MetalPlatform.h"
 #include "ReferencePlatform.h"
 #include "openmm/HarmonicAngleForce.h"
 #include "openmm/HarmonicBondForce.h"
@@ -52,7 +52,7 @@
 using namespace OpenMM;
 using namespace std;
 
-static OpenCLPlatform platform;
+static MetalPlatform platform;
 
 const double TOL = 1e-4;
 
@@ -101,7 +101,7 @@ void testForces() {
 int main(int argc, char* argv[]) {
     try {
         if (argc > 1)
-            platform.setPropertyDefaultValue("OpenCLPrecision", string(argv[1]));
+            platform.setPropertyDefaultValue("MetalPrecision", string(argv[1]));
         testForces();
     }
     catch(const exception& e) {

@@ -29,10 +29,10 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "OpenCLTests.h"
+#include "MetalTests.h"
 #include "TestRpmd.h"
 
-extern "C" void registerRPMDOpenCLKernelFactories();
+extern "C" void registerRPMDMetalKernelFactories();
 
 using namespace OpenMM;
 
@@ -41,7 +41,7 @@ void runPlatformTests() {
 }
 
 void setupKernels (int argc, char* argv[]) {
-    registerRPMDOpenCLKernelFactories();
-    platform = dynamic_cast<OpenCLPlatform&>(Platform::getPlatformByName("OpenCL"));
+    registerRPMDMetalKernelFactories();
+    platform = dynamic_cast<MetalPlatform&>(Platform::getPlatformByName("HIP"));
     initializeTests(argc, argv);
 }

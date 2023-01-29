@@ -30,14 +30,14 @@
  * -------------------------------------------------------------------------- */
 
 /**
- * This tests the OpenCL implementation of FFT.
+ * This tests the Metal implementation of FFT.
  */
 
 #include "openmm/internal/AssertionUtilities.h"
-#include "OpenCLArray.h"
-#include "OpenCLContext.h"
-#include "OpenCLFFT3D.h"
-#include "OpenCLSort.h"
+#include "MetalArray.h"
+#include "MetalContext.h"
+#include "MetalFFT3D.h"
+#include "MetalSort.h"
 #include "sfmt/SFMT.h"
 #include "openmm/System.h"
 #include <complex>
@@ -52,14 +52,14 @@
 using namespace OpenMM;
 using namespace std;
 
-static OpenCLPlatform platform;
+static MetalPlatform platform;
 
 template <class Real2>
 void testTransform(bool realToComplex, int xsize, int ysize, int zsize) {
     System system;
     system.addParticle(0.0);
-    OpenCLPlatform::PlatformData platformData(system, "", "", platform.getPropertyDefaultValue("OpenCLPrecision"), "false", "false", 1, NULL);
-    OpenCLContext& context = *platformData.contexts[0];
+    MetalPlatform::PlatformData platformData(system, "", "", platform.getPropertyDefaultValue("MetalPrecision"), "false", "false", 1, NULL);
+    MetalContext& context = *platformData.contexts[0];
     context.initialize();
     OpenMM_SFMT::SFMT sfmt;
     init_gen_rand(0, sfmt);
@@ -76,10 +76,10 @@ void testTransform(bool realToComplex, int xsize, int ysize, int zsize) {
         else
             reference[i] = complex<double>(original[i].x, original[i].y);
     }
-    OpenCLArray grid1(context, original.size(), sizeof(Real2), "grid1");
-    OpenCLArray grid2(context, original.size(), sizeof(Real2), "grid2");
+    MetalArray grid1(context, original.size(), sizeof(Real2), "grid1");
+    MetalArray grid2(context, original.size(), sizeof(Real2), "grid2");
     grid1.upload(original);
-    OpenCLFFT3D fft(context, xsize, ysize, zsize, realToComplex);
+    MetalFFT3D fft(context, xsize, ysize, zsize, realToComplex);
 
     // Perform a forward FFT, then verify the result is correct.
 
@@ -117,8 +117,8 @@ void testTransform(bool realToComplex, int xsize, int ysize, int zsize) {
 int main(int argc, char* argv[]) {
     try {
         if (argc > 1)
-            platform.setPropertyDefaultValue("OpenCLPrecision", string(argv[1]));
-        if (platform.getPropertyDefaultValue("OpenCLPrecision") == "double") {
+            platform.setPropertyDefaultValue("MetalPrecision", string(argv[1]));
+        if (platform.getPropertyDefaultValue("MetalPrecision") == "double") {
             testTransform<mm_double2>(false, 28, 25, 30);
             testTransform<mm_double2>(true, 28, 25, 25);
             testTransform<mm_double2>(true, 25, 28, 25);

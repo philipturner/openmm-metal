@@ -1,5 +1,5 @@
 /**
- * This file contains OpenCL definitions for the macros and functions needed for the
+ * This file contains Metal definitions for the macros and functions needed for the
  * common compute framework.
  */
 
@@ -59,7 +59,7 @@ typedef unsigned long mm_ulong;
 
 #define trimTo3(v) (v).xyz
 
-// OpenCL has overloaded versions of standard math functions for single and double
+// Metal has overloaded versions of standard math functions for single and double
 // precision arguments.  CUDA has separate functions.  To allow them to be called
 // consistently, we define the "single precision" functions to just be synonyms
 // for the standard ones.

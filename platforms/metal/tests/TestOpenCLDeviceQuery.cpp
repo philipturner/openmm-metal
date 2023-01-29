@@ -31,7 +31,7 @@
 #include <algorithm>
 #include <vector>
 
-#include "OpenCLContext.h"
+#include "MetalContext.h"
 
 using namespace std;
 
@@ -43,7 +43,7 @@ using namespace std;
 int main() {
     std::vector<cl::Platform> platforms;
     cl::Platform::get(&platforms);
-    cout << "OpenCL devices:" << endl << endl;
+    cout << "Metal devices:" << endl << endl;
 
     for (int j = 0; j < platforms.size(); j++) {
         vector<cl::Device> devices;
@@ -57,7 +57,7 @@ int main() {
 
         for (int i = 0; i < devices.size(); i++) {
             cl::Device d = devices[i];
-            cout << "OpenCLPlatformIndex " << j << ", OpenCLDeviceIndex " << i << ": \"" << d.getInfo<CL_DEVICE_NAME>()
+            cout << "MetalPlatformIndex " << j << ", MetalDeviceIndex " << i << ": \"" << d.getInfo<CL_DEVICE_NAME>()
                  << "\"" << endl << "    " << left << setw(32) << "CL_PLATFORM_NAME" << " = "
                  << cl::Platform(d.getInfo<CL_DEVICE_PLATFORM>()).getInfo<CL_PLATFORM_NAME>()
                  << endl

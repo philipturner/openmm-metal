@@ -29,7 +29,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "OpenCLTests.h"
+#include "MetalTests.h"
 #include "TestCheckpoints.h"
 
 void testCheckpoint() {
@@ -96,10 +96,10 @@ void testCheckpoint() {
     // Create a new Context that uses multiple devices.
 
     map<string, string> props;
-    string deviceIndex = platform.getPropertyValue(context, OpenCLPlatform::OpenCLDeviceIndex());
-    props[OpenCLPlatform::OpenCLDeviceIndex()] = deviceIndex+","+deviceIndex;
-    string platformIndex = platform.getPropertyValue(context, OpenCLPlatform::OpenCLPlatformIndex());
-    props[OpenCLPlatform::OpenCLPlatformIndex()] = platformIndex;
+    string deviceIndex = platform.getPropertyValue(context, MetalPlatform::MetalDeviceIndex());
+    props[MetalPlatform::MetalDeviceIndex()] = deviceIndex+","+deviceIndex;
+    string platformIndex = platform.getPropertyValue(context, MetalPlatform::MetalPlatformIndex());
+    props[MetalPlatform::MetalPlatformIndex()] = platformIndex;
 
     VerletIntegrator integrator2(0.001);
     Context context2(system, integrator2, platform, props);

@@ -30,16 +30,16 @@
  * -------------------------------------------------------------------------- */
 
 /**
- * This tests the OpenCL implementation of random number generation.
+ * This tests the Metal implementation of random number generation.
  */
 
 #include "openmm/internal/AssertionUtilities.h"
-#include "OpenCLArray.h"
-#include "OpenCLContext.h"
-#include "OpenCLIntegrationUtilities.h"
+#include "MetalArray.h"
+#include "MetalContext.h"
+#include "MetalIntegrationUtilities.h"
 #include "openmm/System.h"
 #include "openmm/Context.h"
-#include "OpenCLPlatform.h"
+#include "MetalPlatform.h"
 #include "openmm/VerletIntegrator.h"
 #include "SimTKOpenMMRealType.h"
 #include <iostream>
@@ -47,18 +47,18 @@
 using namespace OpenMM;
 using namespace std;
 
-static OpenCLPlatform platform;
+static MetalPlatform platform;
 
 void testGaussian() {
     int numAtoms = 10000;
     System system;
     for (int i = 0; i < numAtoms; i++)
         system.addParticle(1.0);
-    OpenCLPlatform::PlatformData platformData(system, "", "", platform.getPropertyDefaultValue("OpenCLPrecision"), "false", "false", 1, NULL);
-    OpenCLContext& context = *platformData.contexts[0];
+    MetalPlatform::PlatformData platformData(system, "", "", platform.getPropertyDefaultValue("MetalPrecision"), "false", "false", 1, NULL);
+    MetalContext& context = *platformData.contexts[0];
     context.initialize();
     context.getIntegrationUtilities().initRandomNumberGenerator(0);
-    OpenCLArray& random = context.getIntegrationUtilities().getRandom();
+    MetalArray& random = context.getIntegrationUtilities().getRandom();
     context.getIntegrationUtilities().prepareRandomNumbers(random.getSize());
     const int numValues = random.getSize()*4;
     vector<mm_float4> values(numValues);
@@ -133,7 +133,7 @@ void testRandomVelocities() {
 int main(int argc, char* argv[]) {
     try {
         if (argc > 1)
-            platform.setPropertyDefaultValue("OpenCLPrecision", string(argv[1]));
+            platform.setPropertyDefaultValue("MetalPrecision", string(argv[1]));
         testGaussian();
         testRandomVelocities();
     }

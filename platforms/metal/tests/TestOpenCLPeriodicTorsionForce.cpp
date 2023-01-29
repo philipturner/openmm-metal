@@ -29,7 +29,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "OpenCLTests.h"
+#include "MetalTests.h"
 #include "TestPeriodicTorsionForce.h"
 
 void testParallelComputation() {
@@ -51,10 +51,10 @@ void testParallelComputation() {
     VerletIntegrator integrator2(0.01);
 
     map<string, string> props;
-    string deviceIndex = platform.getPropertyValue(context1, OpenCLPlatform::OpenCLDeviceIndex());
-    props[OpenCLPlatform::OpenCLDeviceIndex()] = deviceIndex+","+deviceIndex;
-    string platformIndex = platform.getPropertyValue(context1, OpenCLPlatform::OpenCLPlatformIndex());
-    props[OpenCLPlatform::OpenCLPlatformIndex()] = platformIndex;
+    string deviceIndex = platform.getPropertyValue(context1, MetalPlatform::MetalDeviceIndex());
+    props[MetalPlatform::MetalDeviceIndex()] = deviceIndex+","+deviceIndex;
+    string platformIndex = platform.getPropertyValue(context1, MetalPlatform::MetalPlatformIndex());
+    props[MetalPlatform::MetalPlatformIndex()] = platformIndex;
 
     Context context2(system, integrator2, platform, props);
     context2.setPositions(positions);

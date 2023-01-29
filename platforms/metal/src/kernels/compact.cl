@@ -17,7 +17,7 @@
           dgBlockCounts in stages.
 
   Date:         23 Aug 2009
-  Author:       CUDA version by Imran Haque (ihaque@cs.stanford.edu), converted to OpenCL by Peter Eastman
+  Author:       CUDA version by Imran Haque (ihaque@cs.stanford.edu), converted to Metal by Peter Eastman
   Affiliation:  Stanford University
   License:      Public Domain
 */
