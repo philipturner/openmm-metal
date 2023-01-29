@@ -8,7 +8,7 @@ Another goal is to support machine learning potentials, similar to [openmm-torch
 
 ## Usage
 
-TODO: Finish the actual plugin and provide install instructions.
+TODO: Finish the actual plugin and provide install instructions. Make an `install.sh` attached to each release and inside this source tree, which automatically finds the best binary version (based on macOS version compatibility) and correct architecture. Then, it downloads and checks SHA256. Make a way to query the version of each currently installed binary (e.g. a dynamically loaded symbol).
 
 OpenMM's current energy minimizer hard-codes checks for the `CUDA`, `OpenCL`, and `HIP` platforms. The Metal backend is currently labeled `HIP` everywhere to bypass this limitation. The plugin name will change to `Metal` once OpenMM provides integration internally. To prevent source-breaking changes, check for both the `HIP` and `Metal` backends in your client code.
 
