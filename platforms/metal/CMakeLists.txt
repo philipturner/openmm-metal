@@ -7,6 +7,8 @@
 #   libOpenMMMetal.dylib
 #----------------------------------------------------
 
+INCLUDE_DIRECTORIES(${OPENCL_INCLUDE_DIR})
+
 set(OPENMM_BUILD_OPENCL_TESTS TRUE CACHE BOOL "Whether to build Metal test cases")
 if(BUILD_TESTING AND OPENMM_BUILD_OPENCL_TESTS)
     SUBDIRS (tests)
@@ -54,15 +56,15 @@ SET(SOURCE_FILES) # empty
 SET(SOURCE_INCLUDE_FILES)
 
 FOREACH(subdir ${OPENMM_SOURCE_SUBDIRS})
-    FILE(GLOB_RECURSE src_files  ${CMAKE_CURRENT_SOURCE_DIR}/${subdir}/src/*.cpp ${CMAKE_CURRENT_SOURCE_DIR}/${subdir}/src/*.c)
-    FILE(GLOB incl_files ${CMAKE_CURRENT_SOURCE_DIR}/${subdir}/src/*.h)
+    FILE(GLOB_RECURSE src_files  ${subdir}/src/*.cpp ${subdir}/src/*.c)
+    FILE(GLOB incl_files ${subdir}/src/*.h)
     SET(SOURCE_FILES         ${SOURCE_FILES}         ${src_files})   #append
     IF(MSVC)
-         FILE(GLOB_RECURSE kernel_files ${CMAKE_CURRENT_SOURCE_DIR}/${subdir}/src/kernels/*.cl)
+         FILE(GLOB_RECURSE kernel_files ${subdir}/src/kernels/*.cl)
          SET(SOURCE_FILES ${SOURCE_FILES} ${kernel_files})
     ENDIF(MSVC)
     SET(SOURCE_INCLUDE_FILES ${SOURCE_INCLUDE_FILES} ${incl_files})
-    INCLUDE_DIRECTORIES(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/${subdir}/include)
+    INCLUDE_DIRECTORIES(BEFORE ${subdir}/include)
 ENDFOREACH(subdir)
 
 INCLUDE_DIRECTORIES(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -108,6 +110,7 @@ ADD_DEPENDENCIES(${SHARED_TARGET} CommonKernels)
 
 TARGET_LINK_LIBRARIES(${SHARED_TARGET} ${OPENMM_LIBRARY_NAME}  ${OPENCL_LIBRARIES} ${PTHREADS_LIB})
 SET_TARGET_PROPERTIES(${SHARED_TARGET} PROPERTIES LINK_FLAGS "${EXTRA_LINK_FLAGS}" COMPILE_FLAGS "${EXTRA_COMPILE_FLAGS} -DOPENMM_COMMON_BUILDING_SHARED_LIBRARY")
+SET_TARGET_PROPERTIES(${SHARED_TARGET} PROPERTIES LINK_FLAGS "${EXTRA_COMPILE_FLAGS} -F/Library/Frameworks -framework OpenCL")
 
 INSTALL_TARGETS(/lib/plugins RUNTIME_DIRECTORY /lib/plugins ${SHARED_TARGET})
 

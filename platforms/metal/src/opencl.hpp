@@ -16,11 +16,11 @@
 
 /*! \file
  *
- *   \brief C++ bindings for Metal 1.0, Metal 1.1, Metal 1.2,
- *       Metal 2.0, Metal 2.1, Metal 2.2, and Metal 3.0.
+ *   \brief C++ bindings for OpenCL 1.0, OpenCL 1.1, OpenCL 1.2,
+ *       OpenCL 2.0, OpenCL 2.1, OpenCL 2.2, and OpenCL 3.0.
  *   \author Lee Howes and Bruce Merry
  *
- *   Derived from the Metal 1.x C++ bindings written by
+ *   Derived from the OpenCL 1.x C++ bindings written by
  *   Benedict R. Gaster, Laurent Morichetti and Lee Howes
  *   With additions and fixes from:
  *       Brian Cole, March 3rd 2010 and April 2012
@@ -44,21 +44,21 @@
  *
  *   Doxygen documentation for this header is available here:
  *
- *       http://khronosgroup.github.io/Metal-CLHPP/
+ *       http://khronosgroup.github.io/OpenCL-CLHPP/
  *
  *   The latest version of this header can be found on the GitHub releases page:
  *
- *       https://github.com/KhronosGroup/Metal-CLHPP/releases
+ *       https://github.com/KhronosGroup/OpenCL-CLHPP/releases
  *
  *   Bugs and patches can be submitted to the GitHub repository:
  *
- *       https://github.com/KhronosGroup/Metal-CLHPP
+ *       https://github.com/KhronosGroup/OpenCL-CLHPP
  */
 
 /*! \mainpage
  * \section intro Introduction
  * For many large applications C++ is the language of choice and so it seems
- * reasonable to define C++ bindings for Metal.
+ * reasonable to define C++ bindings for OpenCL.
  *
  * The interface is contained with a single C++ header file \em opencl.hpp and all
  * definitions are contained within the namespace \em cl. There is no additional
@@ -70,20 +70,20 @@
  * overhead.
  *
  * There are numerous compatibility, portability and memory management
- * fixes in the new header as well as additional Metal 2.0 features.
+ * fixes in the new header as well as additional OpenCL 2.0 features.
  * As a result the header is not directly backward compatible and for this
  * reason we release it as opencl.hpp rather than a new version of cl.hpp.
  * 
  *
  * \section compatibility Compatibility
- * Due to the evolution of the underlying Metal API the 2.0 C++ bindings
+ * Due to the evolution of the underlying OpenCL API the 2.0 C++ bindings
  * include an updated approach to defining supported feature versions
- * and the range of valid underlying Metal runtime versions supported.
+ * and the range of valid underlying OpenCL runtime versions supported.
  *
  * The combination of preprocessor macros CL_HPP_TARGET_OPENCL_VERSION and 
  * CL_HPP_MINIMUM_OPENCL_VERSION control this range. These are three digit
- * decimal values representing Metal runime versions. The default for 
- * the target is 200, representing Metal 2.0 and the minimum is also 
+ * decimal values representing OpenCL runime versions. The default for
+ * the target is 200, representing OpenCL 2.0 and the minimum is also
  * defined as 200. These settings would use 2.0 API calls only.
  * If backward compatibility with a 1.2 runtime is required, the minimum
  * version may be set to 120.
@@ -108,7 +108,7 @@
  * CL_HPP_NO_STD_VECTOR, CL_HPP_NO_STD_UNIQUE_PTR and 
  * CL_HPP_NO_STD_STRING macros.
  *
- * The Metal 1.x versions of the C++ bindings included a size_t wrapper
+ * The OpenCL 1.x versions of the C++ bindings included a size_t wrapper
  * class to interface with kernel enqueue. This caused unpleasant interactions
  * with the standard size_t declaration and led to namespacing bugs.
  * In the 2.0 version we have replaced this with a std::array-based interface.
@@ -121,12 +121,12 @@
  * compatibility old behaviour can be regained with the
  * CL_HPP_ENABLE_PROGRAM_CONSTRUCTION_FROM_ARRAY_COMPATIBILITY macro.
  * 
- * In Metal 2.0 Metal C is not entirely backward compatibility with 
- * earlier versions. As a result a flag must be passed to the Metal C
- * compiled to request Metal 2.0 compilation of kernels with 1.2 as
+ * In OpenCL 2.0 OpenCL C is not entirely backward compatibility with
+ * earlier versions. As a result a flag must be passed to the OpenCL C
+ * compiled to request OpenCL 2.0 compilation of kernels with 1.2 as
  * the default in the absence of the flag.
  * In some cases the C++ bindings automatically compile code for ease.
- * For those cases the compilation defaults to Metal C 2.0.
+ * For those cases the compilation defaults to OpenCL C 2.0.
  * If this is not wanted, the CL_HPP_CL_1_2_DEFAULT_BUILD macro may
  * be specified to assume 1.2 compilation.
  * If more fine-grained decisions on a per-kernel bases are required
@@ -138,8 +138,8 @@
  *
  * - CL_HPP_TARGET_OPENCL_VERSION
  *
- *   Defines the target Metal runtime version to build the header
- *   against. Defaults to 200, representing Metal 2.0.
+ *   Defines the target OpenCL runtime version to build the header
+ *   against. Defaults to 200, representing OpenCL 2.0.
  *
  * - CL_HPP_NO_STD_STRING
  *
@@ -167,7 +167,7 @@
  *
  * - CL_HPP_ENABLE_DEVICE_FISSION
  *
- *   Enables device fission for Metal 1.2 platforms.
+ *   Enables device fission for OpenCL 1.2 platforms.
  *
  * - CL_HPP_ENABLE_EXCEPTIONS
  *
@@ -190,7 +190,7 @@
  *
  * - CL_HPP_CL_1_2_DEFAULT_BUILD
  *
- *   Default to Metal C 1.2 compilation rather than Metal C 2.0
+ *   Default to OpenCL C 1.2 compilation rather than OpenCL C 2.0
  *   applies to use of cl::Program construction and other program
  *   build variants.
  *
@@ -230,12 +230,12 @@
         cl::Platform plat;
         for (auto &p : platforms) {
             std::string platver = p.getInfo<CL_PLATFORM_VERSION>();
-            if (platver.find("Metal 2.") != std::string::npos) {
+            if (platver.find("OpenCL 2.") != std::string::npos) {
                 plat = p;
             }
         }
         if (plat() == 0)  {
-            std::cout << "No Metal 2.0 platform found.";
+            std::cout << "No OpenCL 2.0 platform found.";
             return -1;
         }
 
@@ -434,7 +434,7 @@
 
 /* Detect which version to target */
 #if !defined(CL_HPP_TARGET_OPENCL_VERSION)
-# pragma message("opencl.hpp: CL_HPP_TARGET_OPENCL_VERSION is not defined. It will default to 300 (Metal 3.0)")
+# pragma message("opencl.hpp: CL_HPP_TARGET_OPENCL_VERSION is not defined. It will default to 300 (OpenCL 3.0)")
 # define CL_HPP_TARGET_OPENCL_VERSION 300
 #endif
 #if CL_HPP_TARGET_OPENCL_VERSION != 100 && \
@@ -444,12 +444,12 @@
     CL_HPP_TARGET_OPENCL_VERSION != 210 && \
     CL_HPP_TARGET_OPENCL_VERSION != 220 && \
     CL_HPP_TARGET_OPENCL_VERSION != 300
-# pragma message("opencl.hpp: CL_HPP_TARGET_OPENCL_VERSION is not a valid value (100, 110, 120, 200, 210, 220 or 300). It will be set to 300 (Metal 3.0).")
+# pragma message("opencl.hpp: CL_HPP_TARGET_OPENCL_VERSION is not a valid value (100, 110, 120, 200, 210, 220 or 300). It will be set to 300 (OpenCL 3.0).")
 # undef CL_HPP_TARGET_OPENCL_VERSION
 # define CL_HPP_TARGET_OPENCL_VERSION 300
 #endif
 
-/* Forward target Metal version to C headers if necessary */
+/* Forward target OpenCL version to C headers if necessary */
 #if defined(CL_TARGET_OPENCL_VERSION)
 /* Warn if prior definition of CL_TARGET_OPENCL_VERSION is lower than
  * requested C++ bindings version */
@@ -631,7 +631,7 @@ namespace cl {
 namespace cl {
     namespace compatibility {
         /*! \brief class used to interface between C++ and
-        *  Metal C calls that require arrays of size_t values, whose
+        *  OpenCL C calls that require arrays of size_t values, whose
         *  size is known statically.
         */
         template <int N>
@@ -699,7 +699,7 @@ namespace cl {
 
 /*! \namespace cl
  *
- * \brief The Metal C++ bindings are defined within this namespace.
+ * \brief The OpenCL C++ bindings are defined within this namespace.
  *
  */
 namespace cl {
@@ -1463,7 +1463,7 @@ CL_HPP_PARAM_NAME_INFO_IL_KHR_(CL_HPP_DECLARE_PARAM_TRAITS_)
 #endif // #if defined(CL_HPP_USE_IL_KHR)
 
 
-// Flags deprecated in Metal 2.0
+// Flags deprecated in OpenCL 2.0
 #define CL_HPP_PARAM_NAME_INFO_1_0_DEPRECATED_IN_2_0_(F) \
     F(cl_device_info, CL_DEVICE_QUEUE_PROPERTIES, cl_command_queue_properties)
 
@@ -1623,7 +1623,7 @@ struct ReferenceHandler
 
 #if CL_HPP_TARGET_OPENCL_VERSION >= 120
 /**
- * Metal 1.2 devices do have retain/release.
+ * OpenCL 1.2 devices do have retain/release.
  */
 template <>
 struct ReferenceHandler<cl_device_id>
@@ -1653,7 +1653,7 @@ struct ReferenceHandler<cl_device_id>
 };
 #else // CL_HPP_TARGET_OPENCL_VERSION >= 120
 /**
- * Metal 1.1 devices do not have retain/release.
+ * OpenCL 1.1 devices do not have retain/release.
  */
 template <>
 struct ReferenceHandler<cl_device_id>
@@ -2588,14 +2588,14 @@ public:
      *
      *  \param d3d_device_set.
      *
-     *  \param devices returns a vector of Metal D3D10 devices found. The cl::Device
-     *  values returned in devices can be used to identify a specific Metal
+     *  \param devices returns a vector of OpenCL D3D10 devices found. The cl::Device
+     *  values returned in devices can be used to identify a specific OpenCL
      *  device. If \a devices argument is NULL, this argument is ignored.
      *
      *  \return One of the following values:
      *    - CL_SUCCESS if the function is executed successfully.
      *
-     *  The application can query specific capabilities of the Metal device(s)
+     *  The application can query specific capabilities of the OpenCL device(s)
      *  returned by cl::getDevices. This can be used by the application to
      *  determine which device(s) to use.
      *
@@ -2757,8 +2757,8 @@ CL_HPP_DEFINE_STATIC_MEMBER_ cl_int Platform::default_error_ = CL_SUCCESS;
  */
 #if defined(CL_USE_DEPRECATED_OPENCL_1_1_APIS)
 /**
- * Unload the Metal compiler.
- * \note Deprecated for Metal 1.2. Use Platform::unloadCompiler instead.
+ * Unload the OpenCL compiler.
+ * \note Deprecated for OpenCL 1.2. Use Platform::unloadCompiler instead.
  */
 inline CL_EXT_PREFIX__VERSION_1_1_DEPRECATED cl_int
 UnloadCompiler() CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED;
@@ -4067,7 +4067,7 @@ public:
 };
 
 #if defined (CL_HPP_USE_DX_INTEROP)
-/*! \brief Class interface for creating Metal buffers from ID3D10Buffer's.
+/*! \brief Class interface for creating OpenCL buffers from ID3D10Buffer's.
  *
  *  This is provided to facilitate interoperability with Direct3D.
  * 
@@ -4756,7 +4756,7 @@ public:
         // Run-time decision based on the actual platform
         {
             cl_uint version = detail::getContextPlatformVersion(context());
-            useCreateImage = (version >= 0x10002); // Metal 1.2 or above
+            useCreateImage = (version >= 0x10002); // OpenCL 1.2 or above
         }
 #elif CL_HPP_TARGET_OPENCL_VERSION >= 120
         useCreateImage = true;
@@ -4855,7 +4855,7 @@ public:
     * The image will be created matching with a descriptor matching the source. 
     *
     * \param order is the channel order to reinterpret the image data as.
-    *              The channel order may differ as described in the Metal 
+    *              The channel order may differ as described in the OpenCL
     *              2.0 API specification.
     *
     * Wraps clCreateImage().
@@ -4975,7 +4975,7 @@ public:
  *  See Memory for details about copy semantics, etc.
  * 
  *  \see Memory
- *  \note Deprecated for Metal 1.2. Please use ImageGL instead.
+ *  \note Deprecated for OpenCL 1.2. Please use ImageGL instead.
  */
 class CL_EXT_PREFIX__VERSION_1_1_DEPRECATED Image2DGL : public Image2D 
 {
@@ -5187,7 +5187,7 @@ public:
         // Run-time decision based on the actual platform
         {
             cl_uint version = detail::getContextPlatformVersion(context());
-            useCreateImage = (version >= 0x10002); // Metal 1.2 or above
+            useCreateImage = (version >= 0x10002); // OpenCL 1.2 or above
         }
 #elif CL_HPP_TARGET_OPENCL_VERSION >= 120
         useCreateImage = true;
@@ -5388,7 +5388,7 @@ public:
  * \brief general image interface for GL interop.
  * We abstract the 2D and 3D GL images into a single instance here
  * that wraps all GL sourced images on the grounds that setup information
- * was performed by Metal anyway.
+ * was performed by OpenCL anyway.
  */
 class ImageGL : public Image
 {
@@ -6390,7 +6390,7 @@ public:
 #if CL_HPP_TARGET_OPENCL_VERSION >= 210 || (CL_HPP_TARGET_OPENCL_VERSION==200 && defined(CL_HPP_USE_IL_KHR))
     /**
      * Program constructor to allow construction of program from SPIR-V or another IL.
-     * Valid for either Metal >= 2.1 or when CL_HPP_USE_IL_KHR is defined.
+     * Valid for either OpenCL >= 2.1 or when CL_HPP_USE_IL_KHR is defined.
      */
     Program(
         const vector<char>& IL,
@@ -6445,7 +6445,7 @@ public:
     /**
      * Program constructor to allow construction of program from SPIR-V or another IL
      * for a specific context.
-     * Valid for either Metal >= 2.1 or when CL_HPP_USE_IL_KHR is defined.
+     * Valid for either OpenCL >= 2.1 or when CL_HPP_USE_IL_KHR is defined.
      */
     Program(
         const Context& context,
@@ -6498,8 +6498,8 @@ public:
 
     /**
      * Construct a program object from a list of devices and a per-device list of binaries.
-     * \param context A valid Metal context in which to construct the program.
-     * \param devices A vector of Metal device objects for which the program will be created.
+     * \param context A valid OpenCL context in which to construct the program.
+     * \param devices A vector of OpenCL device objects for which the program will be created.
      * \param binaries A vector of pairs of a pointer to a binary object and its length.
      * \param binaryStatus An optional vector that on completion will be resized to
      *   match the size of binaries and filled with values to specify if each binary
@@ -6511,9 +6511,9 @@ public:
      *   CL_INVALID_CONTEXT if context is not a valid context.
      *   CL_INVALID_VALUE if the length of devices is zero; or if the length of binaries does not match the length of devices; 
      *     or if any entry in binaries is NULL or has length 0.
-     *   CL_INVALID_DEVICE if Metal devices listed in devices are not in the list of devices associated with context.
+     *   CL_INVALID_DEVICE if OpenCL devices listed in devices are not in the list of devices associated with context.
      *   CL_INVALID_BINARY if an invalid program binary was encountered for any device. binaryStatus will return specific status for each device.
-     *   CL_OUT_OF_HOST_MEMORY if there is a failure to allocate resources required by the Metal implementation on the host.
+     *   CL_OUT_OF_HOST_MEMORY if there is a failure to allocate resources required by the OpenCL implementation on the host.
      */
     Program(
         const Context& context,
@@ -7164,7 +7164,7 @@ public:
             // Run-time decision based on the actual platform
             {
                 cl_uint version = detail::getContextPlatformVersion(context());
-                useWithProperties = (version >= 0x20000); // Metal 2.0 or above
+                useWithProperties = (version >= 0x20000); // OpenCL 2.0 or above
             }
 #elif CL_HPP_TARGET_OPENCL_VERSION >= 200
             useWithProperties = true;
@@ -7230,7 +7230,7 @@ public:
            // Run-time decision based on the actual platform
            {
                cl_uint version = detail::getContextPlatformVersion(context());
-               useWithProperties = (version >= 0x20000); // Metal 2.0 or above
+               useWithProperties = (version >= 0x20000); // OpenCL 2.0 or above
            }
 #elif CL_HPP_TARGET_OPENCL_VERSION >= 200
            useWithProperties = true;
@@ -7295,7 +7295,7 @@ public:
         // Run-time decision based on the actual platform
         {
             cl_uint version = detail::getContextPlatformVersion(context());
-            useWithProperties = (version >= 0x20000); // Metal 2.0 or above
+            useWithProperties = (version >= 0x20000); // OpenCL 2.0 or above
         }
 #elif CL_HPP_TARGET_OPENCL_VERSION >= 200
         useWithProperties = true;
@@ -7362,7 +7362,7 @@ public:
         // Run-time decision based on the actual platform
         {
             cl_uint version = detail::getContextPlatformVersion(context());
-            useWithProperties = (version >= 0x20000); // Metal 2.0 or above
+            useWithProperties = (version >= 0x20000); // OpenCL 2.0 or above
         }
 #elif CL_HPP_TARGET_OPENCL_VERSION >= 200
         useWithProperties = true;
@@ -7413,7 +7413,7 @@ public:
         // Run-time decision based on the actual platform
         {
             cl_uint version = detail::getContextPlatformVersion(context());
-            useWithProperties = (version >= 0x20000); // Metal 2.0 or above
+            useWithProperties = (version >= 0x20000); // OpenCL 2.0 or above
         }
 #elif CL_HPP_TARGET_OPENCL_VERSION >= 200
         useWithProperties = true;
@@ -7464,7 +7464,7 @@ public:
         // Run-time decision based on the actual platform
         {
             cl_uint version = detail::getContextPlatformVersion(context());
-            useWithProperties = (version >= 0x20000); // Metal 2.0 or above
+            useWithProperties = (version >= 0x20000); // OpenCL 2.0 or above
         }
 #elif CL_HPP_TARGET_OPENCL_VERSION >= 200
         useWithProperties = true;
@@ -7788,7 +7788,7 @@ public:
      * Enqueue a command to fill a buffer object with a pattern
      * of a given size. The pattern is specified as a vector type.
      * \tparam PatternType The datatype of the pattern field. 
-     *     The pattern type must be an accepted Metal data type.
+     *     The pattern type must be an accepted OpenCL data type.
      * \tparam offset Is the offset in bytes into the buffer at 
      *     which to start filling. This must be a multiple of 
      *     the pattern size.
@@ -8251,7 +8251,7 @@ public:
 
 #if CL_HPP_TARGET_OPENCL_VERSION >= 200
     /**
-     * Enqueues a command that will release a coarse-grained SVM buffer back to the Metal runtime.
+     * Enqueues a command that will release a coarse-grained SVM buffer back to the OpenCL runtime.
      * This variant takes a raw SVM pointer.
      */
     template<typename T>
@@ -8276,7 +8276,7 @@ public:
     }
 
     /**
-     * Enqueues a command that will release a coarse-grained SVM buffer back to the Metal runtime.
+     * Enqueues a command that will release a coarse-grained SVM buffer back to the OpenCL runtime.
      * This variant takes a cl::pointer instance.
      */
     template<typename T, class D>
@@ -8301,7 +8301,7 @@ public:
     }
 
     /**
-     * Enqueues a command that will release a coarse-grained SVM buffer back to the Metal runtime.
+     * Enqueues a command that will release a coarse-grained SVM buffer back to the OpenCL runtime.
      * This variant takes a cl::vector instance.
      */
     template<typename T, class Alloc>
@@ -9381,7 +9381,7 @@ inline cl_int enqueueUnmapMemObject(
 #if CL_HPP_TARGET_OPENCL_VERSION >= 200
 /**
  * Enqueues to the default queue a command that will release a coarse-grained 
- * SVM buffer back to the Metal runtime.
+ * SVM buffer back to the OpenCL runtime.
  * This variant takes a raw SVM pointer.
  */
 template<typename T>
@@ -9403,7 +9403,7 @@ inline cl_int enqueueUnmapSVM(
 
 /**
  * Enqueues to the default queue a command that will release a coarse-grained 
- * SVM buffer back to the Metal runtime.
+ * SVM buffer back to the OpenCL runtime.
  * This variant takes a cl::pointer instance.
  */
 template<typename T, class D>
@@ -9424,7 +9424,7 @@ inline cl_int enqueueUnmapSVM(
 
 /**
  * Enqueues to the default queue a command that will release a coarse-grained 
- * SVM buffer back to the Metal runtime.
+ * SVM buffer back to the OpenCL runtime.
  * This variant takes a cl::vector instance.
  */
 template<typename T, class Alloc>

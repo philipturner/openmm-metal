@@ -67,11 +67,11 @@ SET(SOURCE_FILES) # empty
 SET(SOURCE_INCLUDE_FILES)
 
 FOREACH(subdir ${OPENMM_SOURCE_SUBDIRS})
-    FILE(GLOB_RECURSE src_files  ${CMAKE_CURRENT_SOURCE_DIR}/${subdir}/src/*.cpp ${CMAKE_CURRENT_SOURCE_DIR}/${subdir}/src/*.c)
+    FILE(GLOB_RECURSE src_files  ${subdir}/src/*.cpp ${subdir}/src/*.c)
     FILE(GLOB incl_files ${CMAKE_CURRENT_SOURCE_DIR}/${subdir}/src/*.h)
     SET(SOURCE_FILES         ${SOURCE_FILES}         ${src_files})   #append
     SET(SOURCE_INCLUDE_FILES ${SOURCE_INCLUDE_FILES} ${incl_files})
-    INCLUDE_DIRECTORIES(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/${subdir}/include)
+    INCLUDE_DIRECTORIES(BEFORE ${subdir}/include)
 ENDFOREACH(subdir)
 
 SET(COMMON_KERNELS_CPP ${CMAKE_CURRENT_BINARY_DIR}/src/CommonDrudeKernelSources.cpp)
