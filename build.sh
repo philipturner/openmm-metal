@@ -80,7 +80,6 @@ openmm_include_dir="${openmm_parent_dir}/include"
 # libOpenMMAmoebaMetal.dylib
 # libOpenMMDrudeMetal.dylib
 # libOpenMMRPMDMetal.dylib
-
 cmake .. -DCMAKE_INSTALL_PREFIX="/usr/local/openmm" -DOPENMM_DIR=${openmm_parent_dir}
 
 # 4 CPU cores is the most compatible amount of cores across all Mac systems.
@@ -88,9 +87,7 @@ cmake .. -DCMAKE_INSTALL_PREFIX="/usr/local/openmm" -DOPENMM_DIR=${openmm_parent
 # cause load imbalance on quad-core Intel Macs.
 make -j4
 
-# TODO:
-# Embed the binaries into a supermassive Bash script, just like other GitHub
-# packages. This prevents needing to mess with cross-compilation.
-
-# TODO:
-# Give security-conscious users the ability to install from source.
+mv "platforms/metal/libOpenMMMetal.dylib" "libOpenMMMetal.dylib"
+mv "plugins/amoeba/platforms/metal/libOpenMMAmoebaMetal.dylib" "libOpenMMAmoebaMetal.dylib"
+mv "plugins/drude/platforms/metal/libOpenMMDrudeMetal.dylib" "libOpenMMDrudeMetal.dylib"
+mv "plugins/rpmd/platforms/metal/libOpenMMRPMDMetal.dylib" "libOpenMMRPMDMetal.dylib"

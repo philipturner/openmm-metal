@@ -1,14 +1,24 @@
 # OpenMM Metal Plugin
 
-This plugin adds the Metal platform that accelerates [OpenMM](https://openmm.org) on Metal 3 GPUs. It supports Apple, AMD, and Intel GPUs running macOS 13 or higher. The current implementation uses Apple's Metal compatiblity layer (`cl2metal`) to translate Metal kernels to AIR. Its current focus is implementing patches for OpenMM's code base that improve performance on macOS. It distributes the patches in a way easily accessible to most users, who would otherwise wait for them to be upstreamed. As a beta version of the patches, this may cause unexpected bugs or performance regressions.
+This plugin adds the Metal platform that accelerates [OpenMM](https://openmm.org) on Metal 3 GPUs. It supports Apple, AMD, and Intel GPUs running macOS 13\* or higher. The current implementation uses Apple's Metal compatiblity layer (`cl2metal`) to translate Metal kernels to AIR. Its current focus is implementing patches for OpenMM's code base that improve performance on macOS. It distributes the patches in a way easily accessible to most users, who would otherwise wait for them to be upstreamed. As a beta version of the patches, this may cause unexpected bugs or performance regressions.
 
-The Metal plugin will eventually transition most code directly to the Metal API. Doing so enables optimizations like SIMD-group reductions and indirect command buffers, but removes double precision support on AMD GPUs. Prior to the transition, the plugin will establish [double-single FP64 emulation](https://andrewthall.org/papers/df64_qf128.pdf) and deactivate `double` precision, leaving only `mixed`. This is orthogonal to Kahan summation being considered for the main OpenMM code base, which enhances `single` precision.
+> \* The current version supports macOS Monterey. Ventura will only be required after the transition to Metal.
+
+The Metal plugin will eventually transition most code directly to the Metal API. Doing so enables optimizations like SIMD-group reductions and indirect command buffers, but removes double precision support on AMD GPUs. Prior to the transition, the plugin will establish [double-single FP64 emulation](https://andrewthall.org/papers/df64_qf128.pdf) and deactivate `double` precision, leaving only `mixed`. <!--This is orthogonal to Kahan summation being considered for the main OpenMM code base, which enhances `single` precision.-->
 
 Another goal is to support machine learning potentials, similar to [openmm-torch](https://github.com/openmm/openmm-torch). This repository should provide a more direct pathway to [MPSGraph](https://developer.apple.com/documentation/metalperformanceshadersgraph), the high-level MLIR compiler harnessed by tensorflow-metal and PyTorch. The plugin should create API (e.g. `MPSGraphForce`) for extracting the `MTLBuffer` backing an OpenMM class. The API should also facilitate construction of `MPSGraphTensor` and `MPSGraphTensorData` instances from the buffer. The ML potential (written in C++) should be made accessible from Swift - the language for using MPSGraph. Swift code will access all other OpenMM APIs through [PythonKit](https://github.com/pvieito/PythonKit).
 
 ## Usage
 
-TODO: Finish the actual plugin and provide install instructions. Make an `install.sh` attached to each release and inside this source tree, which automatically finds the best binary version (based on macOS version compatibility) and correct architecture. Then, it downloads and checks SHA256. Make a way to query the version of each currently installed binary (e.g. a dynamically loaded symbol).
+In Finder, create an empty folder and right-click it. Select `New Terminal at Folder` from the menu, which launches a Terminal window. Copy and enter the following commands one-by-one.
+
+```
+
+```
+
+TODO: For user convenience, attach pre-compiled binaries and `install.sh` to the first official release. The installer automatically finds the best binary version (based on macOS version compatibility) and the correct architecture. Then, it downloads and checks SHA256. Finally, make a way to query the version of each currently installed binary (e.g. a dynamically loaded symbol).
+
+TODO: Test performance on Intel Mac mini before official release. Did certain code changes make things worse?
 
 OpenMM's current energy minimizer hard-codes checks for the `CUDA`, `Metal`, and `HIP` platforms. The Metal backend is currently labeled `HIP` everywhere to bypass this limitation. The plugin name will change to `Metal` once OpenMM provides integration internally. To prevent source-breaking changes, check for both the `HIP` and `Metal` backends in your client code.
 

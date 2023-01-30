@@ -287,6 +287,10 @@ MetalContext::MetalContext(const System& system, int platformIndex, int deviceIn
                         // compute unit to hide memory latency.
                         if (simdPerComputeUnit > 1) {
                             numThreadBlocksPerComputeUnit = 4*simdPerComputeUnit;
+                            if (simdWidth == 32) {
+                                 // Actually don't change original behavior because we're using VkFFT.
+                                numThreadBlocksPerComputeUnit = 6*simdPerComputeUnit;
+                            }
                         }
 
                         // If the queries are supported then must be newer than SDK 2.4.
@@ -344,6 +348,11 @@ MetalContext::MetalContext(const System& system, int platformIndex, int deviceIn
                         simdPerComputeUnit = 4;
                     }
                     numThreadBlocksPerComputeUnit = 4*simdPerComputeUnit;
+                    
+                     if (simdWidth == 32) {
+                         // Actually don't change original behavior because we're using VkFFT.
+                        numThreadBlocksPerComputeUnit = 6*simdPerComputeUnit;
+                    }
                 }
                 #endif
                 
