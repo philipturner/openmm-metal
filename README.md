@@ -65,6 +65,10 @@ TODO: For user convenience, attach pre-compiled binaries and `install.sh` to the
 
 TODO: Test Intel Mac mini before official release. Did any code changes harm performance?
 
+## Performance
+
+Expect a 50-150% speedup depending on your workload.
+
 ## License
 
 The Metal Platform uses OpenMM API under the terms of the MIT License.  A copy of this license may
