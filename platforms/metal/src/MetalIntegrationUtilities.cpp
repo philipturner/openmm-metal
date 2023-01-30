@@ -34,7 +34,9 @@ MetalIntegrationUtilities::MetalIntegrationUtilities(MetalContext& context, cons
         ccmaConvergedHostBuffer.initialize<cl_int>(context, 1, "CcmaConvergedHostBuffer", CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR);
         // Different communication mechanisms give optimal performance on AMD and on NVIDIA.
         string vendor = context.getDevice().getInfo<CL_DEVICE_VENDOR>();
-        ccmaUseDirectBuffer = (vendor.size() >= 28 && vendor.substr(0, 28) == "Advanced Micro Devices, Inc.");
+        
+        ccmaUseDirectBuffer = (vendor.size() >= 3 && vendor.substr(0, 3) == "AMD") ||
+                              (vendor.size() >= 28 && vendor.substr(0, 28) == "Advanced Micro Devices, Inc.");
 }
 
 MetalArray& MetalIntegrationUtilities::getPosDelta() {

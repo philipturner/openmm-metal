@@ -71,7 +71,8 @@ MetalNonbondedUtilities::MetalNonbondedUtilities(MetalContext& context) : contex
         if (vendor.size() >= 5 && vendor.substr(0, 5) == "Apple") {
             blocksPerCore = 3;
         }
-        else if (vendor.size() >= 28 && vendor.substr(0, 28) == "Advanced Micro Devices, Inc.") {
+        else if ((vendor.size() >= 3 && vendor.substr(0, 3) == "AMD") ||
+                 (vendor.size() >= 28 && vendor.substr(0, 28) == "Advanced Micro Devices, Inc.")) {
             blocksPerCore = 16;
         }
 

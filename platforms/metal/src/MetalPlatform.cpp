@@ -114,7 +114,7 @@ MetalPlatform::MetalPlatform() {
 }
 
 double MetalPlatform::getSpeed() const {
-    return 50;
+    return 1000000;
 }
 
 bool MetalPlatform::supportsDoublePrecision() const {

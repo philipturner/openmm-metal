@@ -72,6 +72,7 @@ static void CL_CALLBACK errorCallback(const char* errinfo, const void* private_i
 static bool isSupported(cl::Platform platform) {
     string vendor = platform.getInfo<CL_PLATFORM_VENDOR>();
     return (vendor.find("NVIDIA") == 0 ||
+            vendor.find("AMD") == 0 ||
             vendor.find("Advanced Micro Devices") == 0 ||
             vendor.find("Apple") == 0 ||
             vendor.find("Intel") == 0);
