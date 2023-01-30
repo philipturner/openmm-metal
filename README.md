@@ -13,14 +13,57 @@ Another goal is to support machine learning potentials, similar to [openmm-torch
 In Finder, create an empty folder and right-click it. Select `New Terminal at Folder` from the menu, which launches a Terminal window. Copy and enter the following commands one-by-one.
 
 ```
+conda install -c conda-forge/label/openmm_rc -c conda-forge openmm
+git clone https://github.com/openmm/openmm
+git clone https://github.com/philipturner/openmm-metal
+cd openmm-metal
+bash build.sh
+PLUGINS_DIR=/usr/local/openmm/lib/plugins
+
+:# requires password
+sudo mkdir -p $PLUGINS_DIR
+sudo cp .build/libOpenMMMetal.dylib $PLUGINS_DIR/libOpenMMMetal.dylib
+sudo cp .build/libOpenMMAmoebaMetal.dylib $PLUGINS_DIR/libOpenMMAmoebaMetal.dylib
+sudo cp .build/libOpenMMDrudeMetal.dylib $PLUGINS_DIR/libOpenMMDrudeMetal.dylib
+sudo cp .build/libOpenMMRPMDMetal.dylib $PLUGINS_DIR/libOpenMMRPMDMetal.dylib
+```
+
+Next, you will benchmark OpenCL against Metal. In your originally empty folder, enter `openmm/examples`. Arrange the files by name and locate `benchmark.py`. Then, open the file with TextEdit or Xcode. Modify the top of the script as shown below:
+
+```python
+from __future__ import print_function
+import openmm.app as app
+import openmm as mm
+import openmm.unit as unit
+from datetime import datetime
+import argparse
+import os
+
+# What you need to add:
+mm.Platform.loadPluginsFromDirectory(mm.Platform.getDefaultPluginsDirectory())
+
+# Rest of the code:
+def cpuinfo():
+    """Return CPU info"""
+```
+
+Press `Cmd + S` to save. Back at the Terminal window, type the following commands:
 
 ```
+cd ../
+cd openmm
+cd examples
+python3 benchmark.py --test apoa1rf --seconds 15 --platform OpenCL
+python3 benchmark.py --test apoa1rf --seconds 15 --platform HIP
+```
+
+OpenMM's current energy minimizer hard-codes checks for the `CUDA`, `Metal`, and `HIP` platforms. The Metal backend is currently labeled `HIP` everywhere to bypass this limitation. The plugin name will change to `Metal` once OpenMM provides integration internally. To prevent source-breaking changes, check for both the `HIP` and `Metal` backends in your client code.
+
+---
 
 TODO: For user convenience, attach pre-compiled binaries and `install.sh` to the first official release. The installer automatically finds the best binary version (based on macOS version compatibility) and the correct architecture. Then, it downloads and checks SHA256. Finally, make a way to query the version of each currently installed binary (e.g. a dynamically loaded symbol).
 
-TODO: Test performance on Intel Mac mini before official release. Did certain code changes make things worse?
-
-OpenMM's current energy minimizer hard-codes checks for the `CUDA`, `Metal`, and `HIP` platforms. The Metal backend is currently labeled `HIP` everywhere to bypass this limitation. The plugin name will change to `Metal` once OpenMM provides integration internally. To prevent source-breaking changes, check for both the `HIP` and `Metal` backends in your client code.
+TODO: Test Intel Mac mini before official release. Did any code changes harm performance?
 
 ## License
 
