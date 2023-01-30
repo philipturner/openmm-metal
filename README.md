@@ -1,6 +1,6 @@
 # OpenMM Metal Plugin
 
-This plugin adds the Metal platform that accelerates [OpenMM](https://openmm.org) on Metal 3 GPUs. It supports Apple, AMD, and Intel GPUs running macOS 13\* or higher. The current implementation uses Apple's Metal compatiblity layer (`cl2metal`) to translate Metal kernels to AIR. Its current focus is implementing patches for OpenMM's code base that improve performance on macOS. It distributes the patches in a way easily accessible to most users, who would otherwise wait for them to be upstreamed. As a beta version of the patches, this may cause unexpected bugs or performance regressions.
+This plugin adds the Metal platform that accelerates [OpenMM](https://openmm.org) on Metal 3 GPUs. It supports Apple, AMD, and Intel GPUs running macOS 13\* or higher. The current implementation uses Apple's OpenCL compatiblity layer (`cl2metal`) to translate OpenCL kernels to AIR. Its current focus is implementing patches for OpenMM's code base that improve performance on macOS. It distributes the patches in a way easily accessible to most users, who would otherwise wait for them to be upstreamed. As a beta version of the patches, this may cause unexpected bugs or performance regressions.
 
 > \* The current version supports macOS Monterey. Ventura will only be required after the transition to Metal.
 
@@ -57,7 +57,7 @@ python3 benchmark.py --test apoa1rf --seconds 15 --platform OpenCL
 python3 benchmark.py --test apoa1rf --seconds 15 --platform HIP
 ```
 
-OpenMM's current energy minimizer hard-codes checks for the `CUDA`, `Metal`, and `HIP` platforms. The Metal backend is currently labeled `HIP` everywhere to bypass this limitation. The plugin name will change to `Metal` once OpenMM provides integration internally. To prevent source-breaking changes, check for both the `HIP` and `Metal` backends in your client code.
+OpenMM's current energy minimizer hard-codes checks for the `CUDA`, `OpenCL`, and `HIP` platforms. The Metal backend is currently labeled `HIP` everywhere to bypass this limitation. The plugin name will change to `Metal` once OpenMM provides integration internally. To prevent source-breaking changes, check for both the `HIP` and `Metal` backends in your client code.
 
 ---
 
@@ -70,7 +70,7 @@ TODO: Test Intel Mac mini before official release. Did any code changes harm per
 The Metal Platform uses OpenMM API under the terms of the MIT License.  A copy of this license may
 be found in the accompanying file [MIT.txt](licenses/MIT.txt).
 
-The Metal Platform is based on the Metal Platform of OpenMM under the terms of the GNU Lesser General
+The Metal Platform is based on the OpenCL Platform of OpenMM under the terms of the GNU Lesser General
 Public License.  A copy of this license may be found in the accompanying file
 [LGPL.txt](licenses/LGPL.txt).  It in turn incorporates the terms of the GNU General Public
 License, which may be found in the accompanying file [GPL.txt](licenses/GPL.txt).
