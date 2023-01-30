@@ -142,36 +142,55 @@ MetalContext::MetalContext(const System& system, int platformIndex, int deviceIn
                 }
                 int maxSize = devices[i].getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>()[0];
                 int processingElementsPerComputeUnit = 8;
+                
+                string vendor = devices[i].getInfo<CL_DEVICE_VENDOR>();
                 if (devices[i].getInfo<CL_DEVICE_TYPE>() != CL_DEVICE_TYPE_GPU) {
                     processingElementsPerComputeUnit = 1;
+                }
+                else if (vendor.size() >= 5 && vendor.substr(0, 5) == "Apple") {
+                    processingElementsPerComputeUnit = 32;
+                }
+                else if (vendor.size() >= 5 && vendor.substr(0, 5) == "Intel" && device.getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_GPU) {
+                    processingElementsPerComputeUnit = 8;
                 }
                 else if (devices[i].getInfo<CL_DEVICE_EXTENSIONS>().find("cl_nv_device_attribute_query") != string::npos) {
                     cl_uint computeCapabilityMajor;
                     clGetDeviceInfo(devices[i](), CL_DEVICE_COMPUTE_CAPABILITY_MAJOR_NV, sizeof(cl_uint), &computeCapabilityMajor, NULL);
                     processingElementsPerComputeUnit = (computeCapabilityMajor < 2 ? 8 : 32);
                 }
-                else if (devices[i].getInfo<CL_DEVICE_EXTENSIONS>().find("cl_amd_device_attribute_query") != string::npos) {
-                    // This attribute does not ensure that all queries are supported by the runtime (it may be an older runtime,
-                    // or the CPU device) so still have to check for errors.
-                    try {
-                        processingElementsPerComputeUnit =
-                            // AMD GPUs either have a single VLIW SIMD or multiple scalar SIMDs.
-                            // The SIMD width is the number of threads the SIMD executes per cycle.
-                            // This will be less than the wavefront width since it takes several
-                            // cycles to execute the full wavefront.
-                            // The SIMD instruction width is the VLIW instruction width (or 1 for scalar),
-                            // this is the number of ALUs that can be executing per instruction per thread.
-                            devices[i].getInfo<CL_DEVICE_SIMD_PER_COMPUTE_UNIT_AMD>() *
-                            devices[i].getInfo<CL_DEVICE_SIMD_WIDTH_AMD>() *
-                            devices[i].getInfo<CL_DEVICE_SIMD_INSTRUCTION_WIDTH_AMD>();
-                        // Just in case any of the queries return 0.
-                        if (processingElementsPerComputeUnit <= 0)
-                            processingElementsPerComputeUnit = 1;
+                else if ((vendor.size() >= 3 && vendor.substr(0, 3) == "AMD") ||
+                         (vendor.size() >= 28 && vendor.substr(0, 28) == "Advanced Micro Devices, Inc.")) {
+                    if (devices[i].getInfo<CL_DEVICE_EXTENSIONS>().find("cl_amd_device_attribute_query") != string::npos) {
+                        // This attribute does not ensure that all queries are supported by the runtime (it may be an older runtime,
+                        // or the CPU device) so still have to check for errors.
+                        try {
+                            processingElementsPerComputeUnit =
+                                // AMD GPUs either have a single VLIW SIMD or multiple scalar SIMDs.
+                                // The SIMD width is the number of threads the SIMD executes per cycle.
+                                // This will be less than the wavefront width since it takes several
+                                // cycles to execute the full wavefront.
+                                // The SIMD instruction width is the VLIW instruction width (or 1 for scalar),
+                                // this is the number of ALUs that can be executing per instruction per thread.
+                                devices[i].getInfo<CL_DEVICE_SIMD_PER_COMPUTE_UNIT_AMD>() *
+                                devices[i].getInfo<CL_DEVICE_SIMD_WIDTH_AMD>() *
+                                devices[i].getInfo<CL_DEVICE_SIMD_INSTRUCTION_WIDTH_AMD>();
+                            // Just in case any of the queries return 0.
+                            if (processingElementsPerComputeUnit <= 0)
+                                processingElementsPerComputeUnit = 1;
+                        }
+                        catch (cl::Error err) {
+                            // Runtime does not support the queries so use default.
+                        }
                     }
-                    catch (cl::Error err) {
-                        // Runtime does not support the queries so use default.
+                    
+                    // macOS doesn't have the APP SDK or `cl_amd_device_attribute_query`.
+                    #if __APPLE__
+                    else {
+                        processingElementsPerComputeUnit = 64;
                     }
+                    #endif
                 }
+                
                 int speed = devices[i].getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>()*processingElementsPerComputeUnit*devices[i].getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>();
                 if (maxSize >= minThreadBlockSize && (speed > bestSpeed || (supported && !bestSupported))) {
                     bestDevice = i;
@@ -241,9 +260,10 @@ MetalContext::MetalContext(const System& system, int platformIndex, int deviceIn
                 }
             }
         }
-        else if (vendor.size() >= 28 && vendor.substr(0, 28) == "Advanced Micro Devices, Inc.") {
+        else if ((vendor.size() >= 3 && vendor.substr(0, 3) == "AMD") ||
+                 (vendor.size() >= 28 && vendor.substr(0, 28) == "Advanced Micro Devices, Inc.")) {
             if (device.getInfo<CL_DEVICE_TYPE>() != CL_DEVICE_TYPE_GPU) {
-                /// \todo Is 6 a good value for the Metal CPU device?
+                /// \todo Is 6 a good value for the OpenCL CPU device?
                 // numThreadBlocksPerComputeUnit = ?;
                 simdWidth = 1;
             }

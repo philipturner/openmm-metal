@@ -65,8 +65,18 @@ MetalNonbondedUtilities::MetalNonbondedUtilities(MetalContext& context) : contex
         forceThreadBlockSize = 1;
     }
     else if (context.getSIMDWidth() == 32) {
-            numForceThreadBlocks = 4*context.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
-            forceThreadBlockSize = 256;
+        // TODO: Try activating this code path on Intel iGPU.
+        int blocksPerCore = 4;
+        std::string vendor = context.getDevice().getInfo<CL_DEVICE_VENDOR>();
+        if (vendor.size() >= 5 && vendor.substr(0, 5) == "Apple") {
+            blocksPerCore = 3;
+        }
+        else if (vendor.size() >= 28 && vendor.substr(0, 28) == "Advanced Micro Devices, Inc.") {
+            blocksPerCore = 16;
+        }
+
+        numForceThreadBlocks = blocksPerCore*context.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
+        forceThreadBlockSize = 256;
     }
     else {
         numForceThreadBlocks = context.getNumThreadBlocks();
@@ -182,6 +192,19 @@ static bool compareInt2LargeSIMD(mm_int2 a, mm_int2 b) {
 }
 
 void MetalNonbondedUtilities::initialize(const System& system) {
+    // For smaller simulations, we don't want to oversubscribe on RDNA.
+    std::string vendor = context.getDevice().getInfo<CL_DEVICE_VENDOR>();
+    if (context.getSIMDWidth() == 32 &&
+        (vendor.size() >= 3 && vendor.substr(0, 3) == "AMD") ||
+        (vendor.size() >= 28 && vendor.substr(0, 28) == "Advanced Micro Devices, Inc."))
+    {
+        // TODO: Find a better heuristic - where is the actual cutoff? Also eliminate #CUs as a confounding variable.
+        if (context.getNumAtoms() < 10000)
+            numForceThreadBlocks /= 4;
+        else if (context.getNumAtoms() < 20000)
+            numForceThreadBlocks /= 2;
+    }
+
     if (atomExclusions.size() == 0) {
         // No exclusions were specifically requested, so just mark every atom as not interacting with itself.
 
