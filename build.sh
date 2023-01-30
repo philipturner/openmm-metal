@@ -75,21 +75,18 @@ openmm_parent_dir=`cat python_messaging.txt`
 openmm_lib_dir="${openmm_parent_dir}/lib"
 openmm_include_dir="${openmm_parent_dir}/include"
 
-# Need:
+# Creates:
 # libOpenMMMetal.dylib
 # libOpenMMAmoebaMetal.dylib
 # libOpenMMDrudeMetal.dylib
 # libOpenMMRPMDMetal.dylib
 
-# TODO: Switch to the correct path after debugging this error.
-# -DCMAKE_INSTALL_PREFIX="/usr/local/openmm"
-if [[ ! -d install ]]; then
-    mkdir install
-fi
+cmake .. -DCMAKE_INSTALL_PREFIX="/usr/local/openmm" -DOPENMM_DIR=${openmm_parent_dir}
 
-cmake .. -DCMAKE_INSTALL_PREFIX="$(pwd)/install" -DOPENMM_DIR=${openmm_parent_dir}
-# make -j4
-make # -d VERBOSE=1
+# 4 CPU cores is the most compatible amount of cores across all Mac systems.
+# It doesn't eat into M1 efficiency cores which harm performance, and doesn't
+# cause load imbalance on quad-core Intel Macs.
+make -j4
 
 # TODO:
 # Embed the binaries into a supermassive Bash script, just like other GitHub
