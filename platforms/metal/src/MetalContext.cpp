@@ -149,7 +149,7 @@ MetalContext::MetalContext(const System& system, int platformIndex, int deviceIn
                     processingElementsPerComputeUnit = 1;
                 }
                 else if (vendor.size() >= 5 && vendor.substr(0, 5) == "Apple") {
-                    processingElementsPerComputeUnit = 32;
+                    processingElementsPerComputeUnit = 128;
                 }
                 else if (vendor.size() >= 5 && vendor.substr(0, 5) == "Intel" && device.getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_GPU) {
                     processingElementsPerComputeUnit = 8;
@@ -235,6 +235,7 @@ MetalContext::MetalContext(const System& system, int platformIndex, int deviceIn
         if (vendor.size() >= 5 && vendor.substr(0, 5) == "Apple") {
             simdWidth = 32;
             numThreadBlocksPerComputeUnit = 12;
+            compilationDefines["APPLE_FAMILY_GPU"] = "";
         }
         else if (vendor.size() >= 5 && vendor.substr(0, 5) == "Intel" && device.getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_GPU) {
             // TODO: Test whether 16 or 32 is faster on Intel Mac mini.

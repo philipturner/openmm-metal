@@ -41,6 +41,22 @@ __attribute__((overloadable)) unsigned long atom_add(volatile __global unsigned 
 #define MEM_FENCE mem_fence(CLK_LOCAL_MEM_FENCE+CLK_GLOBAL_MEM_FENCE);
 #define ATOMIC_ADD(dest, value) atom_add(dest, value)
 
+#define FORCE_UNROLL_4(__expr, __start_index) \
+__expr(__start_index + 0); \
+__expr(__start_index + 1); \
+__expr(__start_index + 2); \
+__expr(__start_index + 3); \
+
+#define FORCE_UNROLL_32(__expr) \
+FORCE_UNROLL_4(__expr, 0); \
+FORCE_UNROLL_4(__expr, 4); \
+FORCE_UNROLL_4(__expr, 8); \
+FORCE_UNROLL_4(__expr, 12); \
+FORCE_UNROLL_4(__expr, 16); \
+FORCE_UNROLL_4(__expr, 20); \
+FORCE_UNROLL_4(__expr, 24); \
+FORCE_UNROLL_4(__expr, 28); \
+
 typedef long mm_long;
 typedef unsigned long mm_ulong;
 

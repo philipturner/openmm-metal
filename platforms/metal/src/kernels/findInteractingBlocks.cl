@@ -202,10 +202,21 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
                         }
                         else {
 #endif
+#ifdef APPLE_FAMILY_GPU
+                            #define __findBlocksWithInteractions_loop1(j) \
+                            { \
+                                real3 delta = pos2-posBuffer[warpStart+j]; \
+                                interacts |= (delta.x*delta.x+delta.y*delta.y+delta.z*delta.z < PADDED_CUTOFF_SQUARED); \
+                            } \
+                            
+                            FORCE_UNROLL_32(__findBlocksWithInteractions_loop1)
+#else
                             for (int j = 0; j < TILE_SIZE; j++) {
+                            {
                                 real3 delta = pos2-posBuffer[warpStart+j];
                                 interacts |= (delta.x*delta.x+delta.y*delta.y+delta.z*delta.z < PADDED_CUTOFF_SQUARED);
                             }
+#endif
 #ifdef USE_PERIODIC
                         }
 #endif
@@ -216,14 +227,22 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
                     atomCountBuffer[get_local_id(0)].x = (interacts ? 1 : 0);
                     SYNC_WARPS;
                     int whichBuffer = 0;
-                    for (int offset = 1; offset < TILE_SIZE; offset *= 2) {
-                        if (whichBuffer == 0)
-                            atomCountBuffer[get_local_id(0)].y = (indexInWarp < offset ? atomCountBuffer[get_local_id(0)].x : atomCountBuffer[get_local_id(0)].x+atomCountBuffer[get_local_id(0)-offset].x);
-                        else
-                            atomCountBuffer[get_local_id(0)].x = (indexInWarp < offset ? atomCountBuffer[get_local_id(0)].y : atomCountBuffer[get_local_id(0)].y+atomCountBuffer[get_local_id(0)-offset].y);
-                        whichBuffer = 1-whichBuffer;
-                        SYNC_WARPS;
-                    }
+//                    for (int offset = 1; offset < TILE_SIZE; offset *= 2) {
+                    #define __findBlocksWithInteractions_loop2(offset) \
+                    { \
+                        if (whichBuffer == 0) \
+                            atomCountBuffer[get_local_id(0)].y = (indexInWarp < offset ? atomCountBuffer[get_local_id(0)].x : atomCountBuffer[get_local_id(0)].x+atomCountBuffer[get_local_id(0)-offset].x); \
+                        else \
+                            atomCountBuffer[get_local_id(0)].x = (indexInWarp < offset ? atomCountBuffer[get_local_id(0)].y : atomCountBuffer[get_local_id(0)].y+atomCountBuffer[get_local_id(0)-offset].y); \
+                        whichBuffer = 1-whichBuffer; \
+                        SYNC_WARPS; \
+                    } \
+                    
+                    __findBlocksWithInteractions_loop2(1);
+                    __findBlocksWithInteractions_loop2(2);
+                    __findBlocksWithInteractions_loop2(4);
+                    __findBlocksWithInteractions_loop2(8);
+                    __findBlocksWithInteractions_loop2(16);
                     
                     // Add any interacting atoms to the buffer.
 
