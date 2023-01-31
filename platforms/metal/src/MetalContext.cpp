@@ -342,7 +342,16 @@ MetalContext::MetalContext(const System& system, int platformIndex, int deviceIn
                     int simdPerComputeUnit;
                     if (isRDNA) {
                         simdWidth = 32;
-                        simdPerComputeUnit = 2;
+                      
+                        // RDNA incorrectly reports dual compute units as compute units.
+                        // To understand how 2 * 2 still gives a 1:2 ratio, the GCN CU
+                        // has 64 ALUs. The RDNA CU also has 64 ALUs, but the dual CU
+                        // reported here has 64 + 64 = 128. We're treating a larger
+                        // piece of silicon like it has the same number of simds. Using
+                        // the "6" multiplier instead of "4" partially compensates for
+                        // this, creating the only slightly-smaller occupancy we know
+                        // helps on RDNA.
+                        simdPerComputeUnit = 2 * 2;
                     } else {
                         simdWidth = 64;
                         simdPerComputeUnit = 4;
