@@ -24,29 +24,6 @@ SET(OPENMM_DIR "/usr/local/openmm" CACHE PATH "Where OpenMM is installed")
 # We need to know where OpenMM source code is located so we can access required files.
 SET(OPENMM_SOURCE_DIR "${CMAKE_SOURCE_DIR}/../openmm" CACHE PATH "Where OpenMM source code is located")
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # Determine what architecture we are compiling for.
 INCLUDE(${OPENMM_SOURCE_DIR}/cmake_modules/TargetArch.cmake)
 target_architecture(TARGET_ARCH)
@@ -98,6 +75,24 @@ IF (X86)
 ENDIF()
 SET(EXTRA_COMPILE_FLAGS "${EXTRA_COMPILE_FLAGS} -stdlib=libc++")
 SET(EXTRA_LINK_FLAGS ${EXTRA_COMPILE_FLAGS})
+
+# Make sure that Lepton::CompiledExpression class has the same structure as in the main library
+IF(X86 AND NOT (WIN32 AND OPENMM_BUILD_STATIC_LIB))
+    INCLUDE_DIRECTORIES(BEFORE ${OPENMM_SOURCE_DIR}/libraries/asmjit)
+    SET(EXTRA_COMPILE_FLAGS "${EXTRA_COMPILE_FLAGS} -DLEPTON_USE_JIT")
+ENDIF()
+
+IF(UNIX AND NOT CMAKE_BUILD_TYPE)
+    SET(CMAKE_BUILD_TYPE Release CACHE STRING "Debug or Release build" FORCE)
+ENDIF (UNIX AND NOT CMAKE_BUILD_TYPE)
+
+IF (NOT CMAKE_CXX_FLAGS_DEBUG)
+    SET(CMAKE_CXX_FLAGS_DEBUG "-g" CACHE STRING "To use when CMAKE_BUILD_TYPE=Debug" FORCE)
+ENDIF (NOT CMAKE_CXX_FLAGS_DEBUG)
+
+IF (NOT CMAKE_CXX_FLAGS_RELEASE)
+    SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG" CACHE STRING "To use when CMAKE_BUILD_TYPE=Release" FORCE)
+ENDIF (NOT CMAKE_CXX_FLAGS_RELEASE)
 
 # Bypass OpenCL linking issue
 SET(EXTRA_LINK_FLAGS "${EXTRA_LINK_FLAGS} -F/Library/Frameworks -framework OpenCL")
