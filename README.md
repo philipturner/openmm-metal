@@ -67,7 +67,7 @@ TODO: Test Intel Mac mini before official release. Did any code changes harm per
 
 ## Performance
 
-Expect a 50-150% speedup depending on your workload.
+Expect a 100-200% speedup depending on your workload.
 
 ## License
 

@@ -85,7 +85,11 @@ cmake .. -DCMAKE_INSTALL_PREFIX="/usr/local/openmm" -DOPENMM_DIR=${openmm_parent
 # 4 CPU cores is the most compatible amount of cores across all Mac systems.
 # It doesn't eat into M1 efficiency cores which harm performance, and doesn't
 # cause load imbalance on quad-core Intel Macs.
-make -j4
+
+# Nevermind - 8 cores is fastest on my local machine. Perhaps using the E-cores
+# wouldn't _hurt_ on base M1 and double-overloading a quad-core Intel Mac
+# wouldn't hurt. It won't change performance on the hexa-core Intel Mac mini.
+make -j8
 
 mv "platforms/metal/libOpenMMMetal.dylib" "libOpenMMMetal.dylib"
 mv "plugins/amoeba/platforms/metal/libOpenMMAmoebaMetal.dylib" "libOpenMMAmoebaMetal.dylib"
