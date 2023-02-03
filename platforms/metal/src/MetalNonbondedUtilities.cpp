@@ -389,10 +389,8 @@ void MetalNonbondedUtilities::prepareInteractions(int forceGroups) {
     context.getQueue().enqueueReadBuffer(interactionCount.getDeviceBuffer(), CL_FALSE, 0, sizeof(int), pinnedCountMemory, NULL, &downloadCountEvent);
     
     // Segment the command stream to avoid stalls later.
-    #if defined(__aarch64__)
     if (groupKernels[forceGroups].hasForces && useCutoff && numTiles > 0)
         context.getQueue().flush();
-    #endif
 }
 
 void MetalNonbondedUtilities::computeInteractions(int forceGroups, bool includeForces, bool includeEnergy) {
@@ -400,11 +398,6 @@ void MetalNonbondedUtilities::computeInteractions(int forceGroups, bool includeF
         return;
     KernelSet& kernels = groupKernels[forceGroups];
     if (kernels.hasForces) {
-        // Segment the command stream to avoid stalls later.
-        #if defined(__x86_64__)
-        if (groupKernels[forceGroups].hasForces && useCutoff && numTiles > 0)
-            context.getQueue().flush();
-        #endif
         cl::Kernel& kernel = (includeForces ? (includeEnergy ? kernels.forceEnergyKernel : kernels.forceKernel) : kernels.energyKernel);
         if (*reinterpret_cast<cl_kernel*>(&kernel) == NULL)
             kernel = createInteractionKernel(kernels.source, parameters, arguments, true, true, forceGroups, includeForces, includeEnergy);
