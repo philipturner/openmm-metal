@@ -13,7 +13,7 @@ Another goal is to support machine learning potentials, similar to [openmm-torch
 In Finder, create an empty folder and right-click it. Select `New Terminal at Folder` from the menu, which launches a Terminal window. Copy and enter the following commands one-by-one.
 
 ```
-conda install -c conda-forge/label/openmm_rc -c conda-forge openmm
+conda install -c conda-forge openmm
 git clone https://github.com/openmm/openmm
 git clone https://github.com/philipturner/openmm-metal
 cd openmm-metal
