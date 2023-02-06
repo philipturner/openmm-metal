@@ -212,7 +212,6 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
                             FORCE_UNROLL_32(__findBlocksWithInteractions_loop1)
 #else
                             for (int j = 0; j < TILE_SIZE; j++) {
-                            {
                                 real3 delta = pos2-posBuffer[warpStart+j];
                                 interacts |= (delta.x*delta.x+delta.y*delta.y+delta.z*delta.z < PADDED_CUTOFF_SQUARED);
                             }
