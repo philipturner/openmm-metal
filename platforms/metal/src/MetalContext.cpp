@@ -151,7 +151,7 @@ MetalContext::MetalContext(const System& system, int platformIndex, int deviceIn
                 else if (vendor.size() >= 5 && vendor.substr(0, 5) == "Apple") {
                     processingElementsPerComputeUnit = 128;
                 }
-                else if (vendor.size() >= 5 && vendor.substr(0, 5) == "Intel" && device.getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_GPU) {
+                else if (vendor.size() >= 5 && vendor.substr(0, 5) == "Intel" && devices[i].getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_GPU) {
                     processingElementsPerComputeUnit = 8;
                 }
                 else if (devices[i].getInfo<CL_DEVICE_EXTENSIONS>().find("cl_nv_device_attribute_query") != string::npos) {
