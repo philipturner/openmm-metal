@@ -1,5 +1,7 @@
 # OpenMM Metal Plugin
 
+> WARNING: Only use with M1/M2-series for now. This plugin has not been fully tested on Intel Macs and seems to cause bugs there. Precompiled binaries will be released once these issues are resolved.
+
 This plugin adds the Metal platform that accelerates [OpenMM](https://openmm.org) on Metal 3 GPUs. It supports Apple, AMD, and Intel GPUs running macOS 13\* or higher. The current implementation uses Apple's OpenCL compatiblity layer (`cl2metal`) to translate OpenCL kernels to AIR. Its current focus is implementing patches for OpenMM's code base that improve performance on macOS. It distributes the patches in a way easily accessible to most users, who would otherwise wait for them to be upstreamed. As a beta version of the patches, this may cause unexpected bugs or performance regressions.
 
 > \* The current version supports macOS Monterey. Ventura will only be required after the transition to Metal.
@@ -12,7 +14,7 @@ Another goal is to support machine learning potentials, similar to [openmm-torch
 
 In Finder, create an empty folder and right-click it. Select `New Terminal at Folder` from the menu, which launches a Terminal window. Copy and enter the following commands one-by-one.
 
-```
+```bash
 conda install -c conda-forge openmm
 git clone https://github.com/openmm/openmm
 git clone https://github.com/philipturner/openmm-metal
@@ -22,10 +24,8 @@ PLUGINS_DIR=/usr/local/openmm/lib/plugins
 
 :# requires password
 sudo mkdir -p $PLUGINS_DIR
-sudo cp .build/libOpenMMMetal.dylib $PLUGINS_DIR/libOpenMMMetal.dylib
-sudo cp .build/libOpenMMAmoebaMetal.dylib $PLUGINS_DIR/libOpenMMAmoebaMetal.dylib
-sudo cp .build/libOpenMMDrudeMetal.dylib $PLUGINS_DIR/libOpenMMDrudeMetal.dylib
-sudo cp .build/libOpenMMRPMDMetal.dylib $PLUGINS_DIR/libOpenMMRPMDMetal.dylib
+libs=(libOpenMMMetal libOpenMMAmoebaMetal libOpenMMDrudeMetal libOpenMMRPMDMetal)
+for lib in $libs; do sudo cp ".build/${lib}.dylib" "$PLUGINS_DIR/${lib}.dylib"; done
 ```
 
 Next, you will benchmark OpenCL against Metal. In your originally empty folder, enter `openmm/examples`. Arrange the files by name and locate `benchmark.py`. Then, open the file with TextEdit or Xcode. Modify the top of the script as shown below:
@@ -61,9 +61,7 @@ OpenMM's current energy minimizer hard-codes checks for the `CUDA`, `OpenCL`, an
 
 ---
 
-TODO: For user convenience, attach pre-compiled binaries and `install.sh` to the first official release. The installer automatically finds the best binary version (based on macOS version compatibility) and the correct architecture. Then, it downloads and checks SHA256. Finally, make a way to query the version of each currently installed binary (e.g. a dynamically loaded symbol).
-
-TODO: Test Intel Mac mini before official release. Did any code changes harm performance?
+TODO: For user convenience, attach pre-compiled binaries and `install.sh` to the first official release. The installer automatically finds the best binary version (based on macOS version compatibility) and the correct architecture. Then, it downloads and checks SHA256. Finally, make a way to query the version of each currently installed binary (e.g. a dynamically loaded symbol, text file in installation directory).
 
 ## Performance
 
