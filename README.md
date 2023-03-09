@@ -22,7 +22,7 @@ cd openmm-metal
 bash build.sh
 PLUGINS_DIR=/usr/local/openmm/lib/plugins
 
-:# requires password
+# requires password
 sudo mkdir -p $PLUGINS_DIR
 libs=(libOpenMMMetal libOpenMMAmoebaMetal libOpenMMDrudeMetal libOpenMMRPMDMetal)
 for lib in $libs; do sudo cp ".build/${lib}.dylib" "$PLUGINS_DIR/${lib}.dylib"; done
