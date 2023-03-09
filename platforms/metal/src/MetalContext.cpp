@@ -235,7 +235,7 @@ MetalContext::MetalContext(const System& system, int platformIndex, int deviceIn
         if (vendor.size() >= 5 && vendor.substr(0, 5) == "Apple") {
             simdWidth = 32;
             numThreadBlocksPerComputeUnit = 12;
-            compilationDefines["APPLE_FAMILY_GPU"] = "";
+            compilationDefines["VENDOR_APPLE"] = "";
         }
         else if (vendor.size() >= 5 && vendor.substr(0, 5) == "Intel" && device.getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_GPU) {
             // TODO: Test whether 16 or 32 is faster on Intel Mac mini.

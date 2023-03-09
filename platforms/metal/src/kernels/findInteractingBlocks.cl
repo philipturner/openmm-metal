@@ -99,7 +99,9 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
     __local real3 posBuffer[GROUP_SIZE];
     __local volatile unsigned int workgroupTileIndex[GROUP_SIZE/32];
     __local bool includeBlockFlags[GROUP_SIZE];
+#ifdef VENDOR_APPLE
     __local volatile short2 atomCountBuffer[GROUP_SIZE];
+#endif
     __local int* buffer = workgroupBuffer+BUFFER_SIZE*(warpStart/32);
     __local int* exclusionsForX = warpExclusions+MAX_EXCLUSIONS*(warpStart/32);
     __local volatile unsigned int* tileStartIndex = workgroupTileIndex+(warpStart/32);
@@ -133,6 +135,7 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
         const int exclusionStart = exclusionRowIndices[x];
         const int exclusionEnd = exclusionRowIndices[x+1];
         const int numExclusions = exclusionEnd-exclusionStart;
+        // TODO: Try force-unrolling optimization from CUDA on Apple
         for (int j = indexInWarp; j < numExclusions; j += 32)
             exclusionsForX[j] = exclusionIndices[exclusionStart+j];
         if (MAX_EXCLUSIONS > 32)
@@ -146,6 +149,7 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
         for (int block2Base = block1+1; block2Base < NUM_BLOCKS; block2Base += 32) {
             int block2 = block2Base+indexInWarp;
             bool includeBlock2 = (block2 < NUM_BLOCKS);
+            // TODO: Try force-include optimization from CUDA on Apple
             if (includeBlock2) {
                 real4 blockCenterY = sortedBlockCenter[block2];
                 real4 blockSizeY = sortedBlockBoundingBox[block2];
@@ -167,6 +171,7 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
 #endif
                 if (includeBlock2) {
                     int y = (int) sortedBlocks[block2].y;
+                    // TODO: Try force-unrolling optimization from CUDA on Apple
                     for (int k = 0; k < numExclusions; k++)
                         includeBlock2 &= (exclusionsForX[k] != y);
                 }
@@ -174,6 +179,7 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
             
             // Loop over any blocks we identified as potentially containing neighbors.
             
+            // TODO: Try ballot optimization from CUDA on Apple
             includeBlockFlags[get_local_id(0)] = includeBlock2;
             SYNC_WARPS;
             for (int i = 0; i < TILE_SIZE; i++) {
@@ -193,23 +199,29 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
                     bool interacts = false;
                     if (atom2 < NUM_ATOMS) {
 #ifdef USE_PERIODIC
+                        // TODO: Try __ffs optimization from CUDA on Apple
                         if (!singlePeriodicCopy) {
                             for (int j = 0; j < TILE_SIZE; j++) {
-                                real3 delta = pos2-posBuffer[warpStart+j];
+                                real3 delta = pos2.xyz-posBuffer[warpStart+j].xyz;
                                 APPLY_PERIODIC_TO_DELTA(delta)
                                 interacts |= (delta.x*delta.x+delta.y*delta.y+delta.z*delta.z < PADDED_CUTOFF_SQUARED);
                             }
                         }
                         else {
 #endif
-#ifdef APPLE_FAMILY_GPU
+#ifdef VENDOR_APPLE
+                            // The matrix multiplication optimization doesn't
+                            // help right now. Perhaps it will after switching
+                            // over a lot of the threadgroup-heavy setup work
+                            // to SIMD-scoped operations.
                             #define __findBlocksWithInteractions_loop1(j) \
                             { \
-                                real3 delta = pos2-posBuffer[warpStart+j]; \
-                                interacts |= (delta.x*delta.x+delta.y*delta.y+delta.z*delta.z < PADDED_CUTOFF_SQUARED); \
+                                real3 delta = pos2-posBuffer[warpStart+j];\
+                                interacts |= (delta.x*delta.x+delta.y*delta.y+delta.z*delta.z < PADDED_CUTOFF_SQUARED);\
                             } \
-                            
+
                             FORCE_UNROLL_32(__findBlocksWithInteractions_loop1)
+                            #undef __findBlocksWithInteractions_loop1
 #else
                             for (int j = 0; j < TILE_SIZE; j++) {
                                 real3 delta = pos2-posBuffer[warpStart+j];
@@ -222,32 +234,33 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
                     }
                     
                     // Do a prefix sum to compact the list of atoms.
-
+#ifdef VENDOR_APPLE
+                    int toSum = (interacts ? 1 : 0);
+                    int prefixSum = sub_group_scan_inclusive_add(toSum);
+                    
+                    // This should produce incorrect results?
+                    if (interacts)
+                        buffer[neighborsInBuffer+prefixSum-1] = atom2;
+                    neighborsInBuffer += sub_group_broadcast(prefixSum, 31);
+#else
                     atomCountBuffer[get_local_id(0)].x = (interacts ? 1 : 0);
                     SYNC_WARPS;
                     int whichBuffer = 0;
-//                    for (int offset = 1; offset < TILE_SIZE; offset *= 2) {
-                    #define __findBlocksWithInteractions_loop2(offset) \
-                    { \
-                        if (whichBuffer == 0) \
-                            atomCountBuffer[get_local_id(0)].y = (indexInWarp < offset ? atomCountBuffer[get_local_id(0)].x : atomCountBuffer[get_local_id(0)].x+atomCountBuffer[get_local_id(0)-offset].x); \
-                        else \
-                            atomCountBuffer[get_local_id(0)].x = (indexInWarp < offset ? atomCountBuffer[get_local_id(0)].y : atomCountBuffer[get_local_id(0)].y+atomCountBuffer[get_local_id(0)-offset].y); \
-                        whichBuffer = 1-whichBuffer; \
-                        SYNC_WARPS; \
-                    } \
-                    
-                    __findBlocksWithInteractions_loop2(1);
-                    __findBlocksWithInteractions_loop2(2);
-                    __findBlocksWithInteractions_loop2(4);
-                    __findBlocksWithInteractions_loop2(8);
-                    __findBlocksWithInteractions_loop2(16);
+                    for (int offset = 1; offset < TILE_SIZE; offset *= 2) {
+                        if (whichBuffer == 0)
+                            atomCountBuffer[get_local_id(0)].y = (indexInWarp < offset ? atomCountBuffer[get_local_id(0)].x : atomCountBuffer[get_local_id(0)].x+atomCountBuffer[get_local_id(0)-offset].x);
+                        else
+                            atomCountBuffer[get_local_id(0)].x = (indexInWarp < offset ? atomCountBuffer[get_local_id(0)].y : atomCountBuffer[get_local_id(0)].y+atomCountBuffer[get_local_id(0)-offset].y);
+                        whichBuffer = 1-whichBuffer;
+                        SYNC_WARPS;
+                    }
                     
                     // Add any interacting atoms to the buffer.
 
                     if (interacts)
                         buffer[neighborsInBuffer+atomCountBuffer[get_local_id(0)].y-1] = atom2;
                     neighborsInBuffer += atomCountBuffer[warpStart+TILE_SIZE-1].y;
+#endif
                     if (neighborsInBuffer > BUFFER_SIZE-TILE_SIZE) {
                         // Store the new tiles to memory.
 
