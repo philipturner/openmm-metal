@@ -59,6 +59,9 @@ FORCE_UNROLL_4(__expr, 20); \
 FORCE_UNROLL_4(__expr, 24); \
 FORCE_UNROLL_4(__expr, 28); \
 
+#define BALLOT(expr) \
+sub_group_ballot(expr).x \
+
 #endif // VENDOR_APPLE
 
 typedef long mm_long;
@@ -545,6 +548,69 @@ uint4 sub_group_ballot(int predicate) {
   uint4 output = uint4(0);
   output.x = simd_ballot(predicate != 0);
   return output;
+}
+
+// WARNING: For SIMD-scoped barriers, Metal and OpenCL have different
+// enumeration constants for the memory flags.
+
+// Metal:
+// - scope threadgroup = 2
+// - scope device = 1
+// - scope texture = 4
+
+#define __METAL_MEMORY_FLAGS_NONE__ 0
+#define __METAL_MEMORY_FLAGS_DEVICE__ 1
+#define __METAL_MEMORY_FLAGS_THREADGROUP__ 2
+#define __METAL_MEMORY_FLAGS_TEXTURE__ 4
+#define __METAL_MEMORY_FLAGS_THREADGROUP_IMAGEBLOCK__ 8
+
+// OpenCL:
+// - scope local = 1
+// - scope global = 2
+// - scope image = 4
+
+#ifndef CLK_LOCAL_MEM_FENCE
+#define CLK_LOCAL_MEM_FENCE 1
+#endif
+
+#ifndef CLK_GLOBAL_MEM_FENCE
+#define CLK_GLOBAL_MEM_FENCE 2
+#endif
+
+#ifndef CLK_IMAGE_MEM_FENCE
+#define CLK_IMAGE_MEM_FENCE 4
+#endif
+
+__attribute__((__overloadable__))
+void __metal_simdgroup_barrier(int flags, int scope)
+  __asm("air.simdgroup.barrier");
+
+__attribute__((__overloadable__))
+void simdgroup_barrier(int flags) {
+  // __METAL_MEMORY_SCOPE_THREADGROUP__ = 1
+  // The same scope is also used for `__metal_wg_barrier`, while
+  // `__METAL_MEMORY_SCOPE_SIMDGROUP__` is not used for either.
+  __metal_simdgroup_barrier(flags, 1);
+}
+
+__attribute__((__overloadable__))
+__attribute__((__always_inline__)) // Try to force constant evaluation.
+// NOTE: Always profile against the raw Metal binding, as we cannot guarantee
+// the compiler will perform constant evaluation.
+void sub_group_barrier(cl_mem_fence_flags flags)
+  __attribute__((enable_if((flags & (4 + 2 + 1)) == flags, "Invalid memory fence flags.")))
+{
+  int metal_mem_flags = __METAL_MEMORY_FLAGS_NONE__;
+  if (flags & CLK_LOCAL_MEM_FENCE) {
+    metal_mem_flags |= __METAL_MEMORY_FLAGS_THREADGROUP__;
+  }
+  if (flags & CLK_GLOBAL_MEM_FENCE) {
+    metal_mem_flags |= __METAL_MEMORY_FLAGS_DEVICE__;
+  }
+  if (flags & CLK_IMAGE_MEM_FENCE) {
+    metal_mem_flags |= __METAL_MEMORY_FLAGS_TEXTURE__;
+  }
+  simdgroup_barrier(metal_mem_flags);
 }
 
 #undef EXPOSE_FUNCTION_OVERLOAD_ARGS_1
