@@ -99,7 +99,7 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
     __local real3 posBuffer[GROUP_SIZE];
     __local volatile unsigned int workgroupTileIndex[GROUP_SIZE/32];
     __local bool includeBlockFlags[GROUP_SIZE];
-#ifdef VENDOR_APPLE
+#ifndef VENDOR_APPLE
     __local volatile short2 atomCountBuffer[GROUP_SIZE];
 #endif
     __local int* buffer = workgroupBuffer+BUFFER_SIZE*(warpStart/32);
