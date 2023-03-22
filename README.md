@@ -1,17 +1,16 @@
 # OpenMM Metal Plugin
 
-> NOTE: This plugin is likely only temporary. I found a way to access the Metal Standard Library through OpenCL, which will at least accelerate Apple GPUs. I also found that in use cases where you want GPU mixed precision, the CPU is still more precise (but not more accurate). Such constant energy simulations generally require less atoms than others, and probably won't bottleneck my research. Finally, I do not see significant needs to provide zero-copy data transfers between OpenMM and MPSGraph.
->
+<!-- NOTE: This plugin is likely only temporary. I found a way to access the Metal Standard Library through OpenCL, which will at least accelerate Apple GPUs. I also found that in use cases where you want GPU mixed precision, the CPU is still more precise (but not more accurate). Such constant energy simulations generally require less atoms than others, and probably won't bottleneck my research. Finally, I do not see significant needs to provide zero-copy data transfers between OpenMM and MPSGraph. -->
+
 > WARNING: Only use with M1/M2-series for now. This plugin has not been fully tested on Intel Macs and seems to cause bugs there. <!--Precompiled binaries will be released once these issues are resolved.-->
 
 This plugin adds the Metal platform that accelerates [OpenMM](https://openmm.org) on Metal 3 GPUs. It supports Apple, AMD, and Intel GPUs running macOS 13\* or higher. The current implementation uses Apple's OpenCL compatiblity layer (`cl2Metal`) to translate OpenCL kernels to AIR. Its current focus is implementing patches for OpenMM's code base that improve performance on macOS. It distributes the patches in a way easily accessible to most users, who would otherwise wait for them to be upstreamed. As a beta version of the patches, this may cause unexpected bugs or performance regressions.
 
 > \* <s>The current version supports macOS Monterey. Ventura will only be required after the transition to Metal.
 
-The Metal plugin will eventually transition kernels directly to the Metal API. Doing so enables optimizations like SIMD-group reductions and indirect command buffers, but removes double precision support on AMD GPUs. Before the transition, `double` and/or `mixed` precision will be deactivated. The plugin will eventually use [double-single FP64 emulation](https://andrewthall.org/papers/df64_qf128.pdf) to bring back `mixed`, this time supporting all GPUs. <!--This is orthogonal to Kahan summation being considered for the main OpenMM code base, which enhances `single` precision.-->
+The Metal plugin will eventually transition kernels directly to the Metal API. Doing so enables optimizations like SIMD-group reductions and indirect command buffers, but removes double precision support on AMD GPUs. Before the transition, `double` and/or `mixed` precision will be deactivated. The plugin will eventually use [double-single FP64 emulation](https://andrewthall.org/papers/df64_qf128.pdf) to bring back `mixed`, this time supporting all GPUs. <!--This is orthogonal to Kahan summation being considered for the main OpenMM code base, which enhances `single` precision.--></s>
 
 Another goal is to support machine learning potentials, similar to [openmm-torch](https://github.com/openmm/openmm-torch). This repository should provide a more direct pathway to [MPSGraph](https://developer.apple.com/documentation/metalperformanceshadersgraph), the high-level MLIR compiler harnessed by tensorflow-metal and PyTorch. The plugin should create API (e.g. `MPSGraphForce`) for extracting the `MTLBuffer` backing an OpenMM class. The API should also facilitate construction of `MPSGraphTensor` and `MPSGraphTensorData` instances from the buffer. The ML potential (written in C++) should be made accessible from Swift - the language for using MPSGraph. Swift code will access all other OpenMM APIs through [PythonKit](https://github.com/pvieito/PythonKit).
-</s>
 
 ## Usage
 
