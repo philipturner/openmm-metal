@@ -98,8 +98,8 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
     __local int warpExclusions[MAX_EXCLUSIONS*(GROUP_SIZE/32)];
     __local real3 posBuffer[GROUP_SIZE];
     __local volatile unsigned int workgroupTileIndex[GROUP_SIZE/32];
-    __local bool includeBlockFlags[GROUP_SIZE];
 #ifndef VENDOR_APPLE
+    __local bool includeBlockFlags[GROUP_SIZE];
     __local volatile short2 atomCountBuffer[GROUP_SIZE];
 #endif
     __local int* buffer = workgroupBuffer+BUFFER_SIZE*(warpStart/32);
@@ -180,11 +180,21 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
             // Loop over any blocks we identified as potentially containing neighbors.
             
             // TODO: Try ballot optimization from CUDA on Apple
+#ifdef VENDOR_APPLE
+            int includeBlockFlags = sub_group_ballot(includeBlock2).x;
+#else
             includeBlockFlags[get_local_id(0)] = includeBlock2;
             SYNC_WARPS;
+#endif
+#ifdef VENDOR_APPLE
+            while (includeBlockFlags != 0) {
+              int i = ctz(includeBlockFlags) % 32;
+              includeBlockFlags &= includeBlockFlags - 1;
+#else
             for (int i = 0; i < TILE_SIZE; i++) {
                 while (i < TILE_SIZE && !includeBlockFlags[warpStart+i])
                     i++;
+#endif
                 if (i < TILE_SIZE) {
                     int y = (int) sortedBlocks[block2Base+i].y;
 
@@ -235,13 +245,12 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
                     
                     // Do a prefix sum to compact the list of atoms.
 #ifdef VENDOR_APPLE
-                    int toSum = (interacts ? 1 : 0);
-                    int prefixSum = sub_group_scan_inclusive_add(toSum);
-                    
-                    // This should produce incorrect results?
-                    if (interacts)
-                        buffer[neighborsInBuffer+prefixSum-1] = atom2;
-                    neighborsInBuffer += sub_group_broadcast(prefixSum, 31);
+                    int includeAtomFlags = sub_group_ballot(interacts).x;
+                    if (interacts) {
+                      int index = neighborsInBuffer+popcount(includeAtomFlags&warpMask);
+                      buffer[index] = atom2;
+                    }
+                    neighborsInBuffer += popcount(includeAtomFlags);
 #else
                     atomCountBuffer[get_local_id(0)].x = (interacts ? 1 : 0);
                     SYNC_WARPS;
