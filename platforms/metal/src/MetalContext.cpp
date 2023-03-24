@@ -286,10 +286,10 @@ MetalContext::MetalContext(const System& system, int platformIndex, int deviceIn
                         // set instead of the VLIW instruction set. It therefore needs more thread blocks per
                         // compute unit to hide memory latency.
                         if (simdPerComputeUnit > 1) {
-                            numThreadBlocksPerComputeUnit = 4*simdPerComputeUnit;
                             if (simdWidth == 32) {
-                                 // Actually don't change original behavior because we're using VkFFT.
                                 numThreadBlocksPerComputeUnit = 6*simdPerComputeUnit;
+                            } else {
+                                numThreadBlocksPerComputeUnit = 4*simdPerComputeUnit;
                             }
                         }
 
@@ -305,13 +305,8 @@ MetalContext::MetalContext(const System& system, int platformIndex, int deviceIn
                 // macOS doesn't have the APP SDK or `cl_amd_device_attribute_query`.
                 #if __APPLE__
                 else {
-                    // Check for RDNA on macOS, using device strings. The amount of shared
-                    // memory is an unreliable indicator of whether something is GCN
-                    // or RDNA: https://community.amd.com/t5/opencl/how-to-access-more-then-32k-byte-shared-memory-on-vega-navi/m-p/88028
-                    //
-                    // Similarly, we can't trust the wavefront size because macOS might put RDNA GPUs in wave64 mode.
-                    //
-                    // TODO: If someone with macOS + RDNA publishes results of `clinfo` online, re-evaluate this approach.
+                    // On macOS, RDNA always reports wave32 when fetching kernel preferred work group size multiple.
+                    // However, it is tedious to compile an OpenCL kernel before initializing all the resources.
                     bool isRDNA = false;
                     string name = device.getInfo<CL_DEVICE_NAME>();
                     string maybePrefix = "";
@@ -339,11 +334,8 @@ MetalContext::MetalContext(const System& system, int platformIndex, int deviceIn
 
                     // Current macOS doesn't support anything built before 2012, so nothing
                     // is pre-GCN. Therefore we can assume multiple simds/CU.
-                    int simdPerComputeUnit;
                     if (isRDNA) {
-                        simdWidth = 32;
-                      
-                        // RDNA incorrectly reports dual compute units as compute units.
+                        // Windows incorrectly reports dual compute units as compute units.
                         // To understand how 2 * 2 still gives a 1:2 ratio, the GCN CU
                         // has 64 ALUs. The RDNA CU also has 64 ALUs, but the dual CU
                         // reported here has 64 + 64 = 128. We're treating a larger
@@ -351,16 +343,16 @@ MetalContext::MetalContext(const System& system, int platformIndex, int deviceIn
                         // the "6" multiplier instead of "4" partially compensates for
                         // this, creating the only slightly-smaller occupancy we know
                         // helps on RDNA.
-                        simdPerComputeUnit = 2 * 2;
-                    } else {
-                        simdWidth = 64;
-                        simdPerComputeUnit = 4;
-                    }
-                    numThreadBlocksPerComputeUnit = 4*simdPerComputeUnit;
-                    
-                     if (simdWidth == 32) {
-                         // Actually don't change original behavior because we're using VkFFT.
+//                         simdPerComputeUnit = 2 * 2;
+                      
+                        // macOS reports the number of compute units correctly.
+                        int simdPerComputeUnit = 2;
                         numThreadBlocksPerComputeUnit = 6*simdPerComputeUnit;
+                        simdWidth = 32;
+                    } else {
+                        int simdPerComputeUnit = 4;
+                        numThreadBlocksPerComputeUnit = 4*simdPerComputeUnit;
+                        simdWidth = 64;
                     }
                 }
                 #endif
