@@ -135,7 +135,6 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
         const int exclusionStart = exclusionRowIndices[x];
         const int exclusionEnd = exclusionRowIndices[x+1];
         const int numExclusions = exclusionEnd-exclusionStart;
-        // TODO: Try force-unrolling optimization from CUDA on Apple
         for (int j = indexInWarp; j < numExclusions; j += 32)
             exclusionsForX[j] = exclusionIndices[exclusionStart+j];
         if (MAX_EXCLUSIONS > 32)
@@ -149,7 +148,9 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
         for (int block2Base = block1+1; block2Base < NUM_BLOCKS; block2Base += 32) {
             int block2 = block2Base+indexInWarp;
             bool includeBlock2 = (block2 < NUM_BLOCKS);
-            // TODO: Try force-include optimization from CUDA on Apple
+#ifdef VENDOR_APPLE
+            bool forceInclude = false;
+#endif
             if (includeBlock2) {
                 real4 blockCenterY = sortedBlockCenter[block2];
                 real4 blockSizeY = sortedBlockBoundingBox[block2];
@@ -167,7 +168,7 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
                 // If there's any possibility we might have missed it, do a detailed check.
 
                 if (periodicBoxSize.z/2-blockSizeX.z-blockSizeY.z < PADDED_CUTOFF || periodicBoxSize.y/2-blockSizeX.y-blockSizeY.y < PADDED_CUTOFF)
-                    includeBlock2 = true;
+                    includeBlock2 = forceInclude = true;
 #endif
                 if (includeBlock2) {
                     int y = (int) sortedBlocks[block2].y;
@@ -179,9 +180,9 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
             
             // Loop over any blocks we identified as potentially containing neighbors.
             
-            // TODO: Try ballot optimization from CUDA on Apple
 #ifdef VENDOR_APPLE
             int includeBlockFlags = sub_group_ballot(includeBlock2).x;
+            int forceIncludeFlags = sub_group_ballot(forceInclude).x;
 #else
             includeBlockFlags[get_local_id(0)] = includeBlock2;
             SYNC_WARPS;
@@ -190,6 +191,7 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
             while (includeBlockFlags != 0) {
               int i = ctz(includeBlockFlags) % 32;
               includeBlockFlags &= includeBlockFlags - 1;
+              forceInclude = (forceIncludeFlags >> i) & 1;
 #else
             for (int i = 0; i < TILE_SIZE; i++) {
                 while (i < TILE_SIZE && !includeBlockFlags[warpStart+i])
@@ -209,7 +211,6 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
                     bool interacts = false;
                     if (atom2 < NUM_ATOMS) {
 #ifdef USE_PERIODIC
-                        // TODO: Try __ffs optimization from CUDA on Apple
                         if (!singlePeriodicCopy) {
                             for (int j = 0; j < TILE_SIZE; j++) {
                                 real3 delta = pos2.xyz-posBuffer[warpStart+j].xyz;
@@ -289,9 +290,11 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
                         neighborsInBuffer -= TILE_SIZE*tilesToStore;
                    }
                 }
+#ifndef VENDOR_APPLE
                 else {
                     SYNC_WARPS;
                 }
+#endif
             }
         }
         
