@@ -167,8 +167,12 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
                 // The calculation to find the nearest periodic copy is only guaranteed to work if the nearest copy is less than half a box width away.
                 // If there's any possibility we might have missed it, do a detailed check.
 
-                if (periodicBoxSize.z/2-blockSizeX.z-blockSizeY.z < PADDED_CUTOFF || periodicBoxSize.y/2-blockSizeX.y-blockSizeY.y < PADDED_CUTOFF)
-                    includeBlock2 = forceInclude = true;
+                if (periodicBoxSize.z/2-blockSizeX.z-blockSizeY.z < PADDED_CUTOFF || periodicBoxSize.y/2-blockSizeX.y-blockSizeY.y < PADDED_CUTOFF) {
+                    includeBlock2 = true;
+#ifdef VENDOR_APPLE
+                    forceInclude = true;
+#endif
+                }
 #endif
                 if (includeBlock2) {
                     int y = (int) sortedBlocks[block2].y;
