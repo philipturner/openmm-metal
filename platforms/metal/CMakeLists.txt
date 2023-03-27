@@ -8,9 +8,9 @@
 #----------------------------------------------------
 
 set(OPENMM_BUILD_OPENCL_TESTS TRUE CACHE BOOL "Whether to build Metal test cases")
-if(BUILD_TESTING AND OPENMM_BUILD_OPENCL_TESTS)
+if(OPENMM_BUILD_OPENCL_TESTS)
     SUBDIRS (tests)
-endif(BUILD_TESTING AND OPENMM_BUILD_OPENCL_TESTS)
+endif(OPENMM_BUILD_OPENCL_TESTS)
 
 # The source is organized into subdirectories, but we handle them all from
 # this CMakeLists file rather than letting CMake visit them as SUBDIRS.

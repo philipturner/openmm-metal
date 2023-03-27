@@ -1,5 +1,49 @@
 #!/bin/bash
 
+# By default, only run tests that give you useful feedback in a reasonable
+# amount of time.
+enable_long_tests=false
+
+# Installing the plugin requires 'sudo' privileges to modify an external
+# directory.
+install_plugin=false
+
+if [[ $# != 0 ]]; then
+  invalid_input=false
+  if [[ $# -gt 2 ]]; then
+    echo "Too many arguments."
+    invalid_input=true
+  fi
+  
+  if [[ $invalid_input == false ]]; then
+    for param in "$@"; do
+      if [[ $param == "--enable-long-tests" ]]; then
+        if [[ $enable_long_tests == true ]]; then
+          echo "Duplicate argument '--enable-long-tests'."
+          invalid_input=true
+        else
+          enable_long_tests=true
+        fi
+      elif [[ $param == "--install-plugin" ]]; then
+        if [[ $install_plugin == true ]]; then
+          echo "Duplicate argument '--install-plugin'."
+          invalid_input=true
+        else
+          install_plugin=true
+        fi
+      else
+        echo "Unrecognized argument '${param}'."
+        invalid_input=true
+      fi
+    done
+  fi
+  
+  if [[ $invalid_input == true ]]; then
+    echo "Usage: build.sh [--platform=[macOS, iOS, tvOS]; default=\"macOS\"]"
+    exit -1
+  fi
+fi
+
 if [[ ! -d ".build" ]]; then
     mkdir ".build"
 fi
@@ -82,10 +126,6 @@ openmm_include_dir="${openmm_parent_dir}/include"
 # libOpenMMRPMDMetal.dylib
 cmake .. -DCMAKE_INSTALL_PREFIX="/usr/local/openmm" \
   -DOPENMM_DIR=${openmm_parent_dir} \
-  -DOPENMM_BUILD_OPENCL_TESTS=1 \
-  -DBUILD_TESTING=1 \
-  
-# TODO: --skip-tests command-line option for build.sh
 
 # 4 CPU cores is the most compatible amount of cores across all Mac systems.
 # It doesn't eat into M1 efficiency cores which harm performance, and doesn't
