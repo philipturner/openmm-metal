@@ -80,7 +80,12 @@ openmm_include_dir="${openmm_parent_dir}/include"
 # libOpenMMAmoebaMetal.dylib
 # libOpenMMDrudeMetal.dylib
 # libOpenMMRPMDMetal.dylib
-cmake .. -DCMAKE_INSTALL_PREFIX="/usr/local/openmm" -DOPENMM_DIR=${openmm_parent_dir}
+cmake .. -DCMAKE_INSTALL_PREFIX="/usr/local/openmm" \
+  -DOPENMM_DIR=${openmm_parent_dir} \
+  -DOPENMM_BUILD_OPENCL_TESTS=1 \
+  -DBUILD_TESTING=1 \
+  
+# TODO: --skip-tests command-line option for build.sh
 
 # 4 CPU cores is the most compatible amount of cores across all Mac systems.
 # It doesn't eat into M1 efficiency cores which harm performance, and doesn't

@@ -114,4 +114,4 @@ INSTALL_TARGETS(/lib/plugins RUNTIME_DIRECTORY /lib/plugins ${SHARED_TARGET})
 # Install headers
 
 FILE(GLOB CORE_HEADERS include/*.h src/opencl.hpp ${KERNELS_H})
-INSTALL_FILES(/include/openmm/opencl FILES ${CORE_HEADERS})
+INSTALL_FILES(/include/openmm/metal FILES ${CORE_HEADERS})

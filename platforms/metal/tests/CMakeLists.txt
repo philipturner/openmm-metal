@@ -4,6 +4,8 @@
 
 ENABLE_TESTING()
 
+INCLUDE_DIRECTORIES(${OPENMM_SOURCE_DIR}/tests)
+
 set(OPENCL_TEST_PLATFORM_INDEX -1 CACHE STRING "Metal platform index used for running Metal test cases. The default, -1, selects the fastest platform")
 set(OPENCL_TEST_DEVICE_INDEX -1 CACHE STRING "Metal device index used for running Metal test cases. The default, -1, selects the fastest device")
 MARK_AS_ADVANCED(OPENCL_TEST_PLATFORM_INDEX)
