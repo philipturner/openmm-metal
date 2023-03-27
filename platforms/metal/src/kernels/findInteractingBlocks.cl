@@ -213,10 +213,26 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
                         APPLY_PERIODIC_TO_POS_WITH_CENTER(pos2, blockCenterX)
 #endif
                     bool interacts = false;
+#ifdef VENDOR_APPLE
+                    real4 blockCenterY = sortedBlockCenter[block2Base+i];
+                    real3 atomDelta = (posBuffer[warpStart+indexInWarp]).xyz-(blockCenterY).xyz;
+  #ifdef USE_PERIODIC
+                    APPLY_PERIODIC_TO_DELTA(atomDelta)
+  #endif
+                    int atomFlags = sub_group_ballot(forceInclude || atomDelta.x*atomDelta.x+atomDelta.y*atomDelta.y+atomDelta.z*atomDelta.z < (PADDED_CUTOFF+blockCenterY.w)*(PADDED_CUTOFF+blockCenterY.w)).x;
+                    if (atom2 < NUM_ATOMS && atomFlags != 0) {
+#else
                     if (atom2 < NUM_ATOMS) {
+#endif
 #ifdef USE_PERIODIC
                         if (!singlePeriodicCopy) {
+  #ifdef VENDOR_APPLE
+                            int first = ctz(atomFlags) % 32;
+                            int last = 32 - clz(atomFlags);
+                            for (int j = first; j < last; j++) {
+  #else
                             for (int j = 0; j < TILE_SIZE; j++) {
+  #endif
                                 real3 delta = pos2.xyz-posBuffer[warpStart+j].xyz;
                                 APPLY_PERIODIC_TO_DELTA(delta)
                                 interacts |= (delta.x*delta.x+delta.y*delta.y+delta.z*delta.z < PADDED_CUTOFF_SQUARED);
