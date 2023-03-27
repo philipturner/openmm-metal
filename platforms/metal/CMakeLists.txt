@@ -10,6 +10,12 @@
 set(OPENMM_BUILD_OPENCL_TESTS TRUE CACHE BOOL "Whether to build Metal test cases")
 if(OPENMM_BUILD_OPENCL_TESTS)
     SUBDIRS (tests)
+    if(OPENMM_BUILD_LONG_TESTS)
+      SUBDIRS(long_tests)
+      if(OPENMM_BUILD_VERY_LONG_TESTS)
+        SUBDIRS(very_long_tests)
+      endif(OPENMM_BUILD_VERY_LONG_TESTS)
+    endif(OPENMM_BUILD_LONG_TESTS)
 endif(OPENMM_BUILD_OPENCL_TESTS)
 
 # The source is organized into subdirectories, but we handle them all from

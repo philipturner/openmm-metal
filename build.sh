@@ -1,35 +1,61 @@
 #!/bin/bash
 
-# By default, only run tests that give you useful feedback in a reasonable
-# amount of time.
-enable_long_tests=false
+# Installing the plugins requires 'sudo' privileges to modify an external
+# directory. It will ask for your password.
+install_plugins=false
 
-# Installing the plugin requires 'sudo' privileges to modify an external
-# directory.
-install_plugin=false
+# The tests will only run if `make test` is called from the same script that
+# invoked `make install`. If '--install-plugins' is not set, tests will fail.
+run_all_tests=false
+
+# Only run tests that give you useful feedback in a reasonable amount of time.
+# On the reference system (32-core M1 Max, 32 GB), this means tests that take
+# less than ~20 seconds.
+run_most_tests=false
+
+# Only run tests that give you useful feedback in a short amount of time.
+# On the reference system (32-core M1 Max, 32 GB), this means tests that take
+# less than ~5 seconds.
+run_quick_tests=false
+
+# TODO: After incorporating mixed precision, make a "very_quick_tests" tier.
 
 if [[ $# != 0 ]]; then
   invalid_input=false
-  if [[ $# -gt 2 ]]; then
+  if [[ $# -gt 3 ]]; then
     echo "Too many arguments."
     invalid_input=true
   fi
   
   if [[ $invalid_input == false ]]; then
     for param in "$@"; do
-      if [[ $param == "--enable-long-tests" ]]; then
-        if [[ $enable_long_tests == true ]]; then
-          echo "Duplicate argument '--enable-long-tests'."
-          invalid_input=true
-        else
-          enable_long_tests=true
-        fi
-      elif [[ $param == "--install-plugin" ]]; then
+      if [[ $param == "--install-plugins" ]]; then
         if [[ $install_plugin == true ]]; then
-          echo "Duplicate argument '--install-plugin'."
+          echo "Duplicate argument '--install-plugins'."
           invalid_input=true
         else
-          install_plugin=true
+          install_plugins=true
+        fi
+      elif [[ $param == "--run-all-tests" ]]; then
+        if [[ $run_all_tests == true ]]; then
+          echo "Duplicate argument '--run-all-tests'."
+          invalid_input=true
+        else
+          run_all_tests=true
+        fi
+      elif [[ $param == "--run-most-tests" ]]; then
+        if [[ $run_all_tests == true ]]; then
+          echo "Duplicate argument '--run-most-tests'."
+          invalid_input=true
+        else
+          run_most_tests=true
+        fi
+      elif [[ $param == "--run-quick-tests" ]]; then
+        if [[ $run_all_tests == true ]]; then
+          echo "Duplicate argument '--run-quick-tests'."
+          invalid_input=true
+        else
+          run_quick_tests=true
         fi
       else
         echo "Unrecognized argument '${param}'."
@@ -39,7 +65,7 @@ if [[ $# != 0 ]]; then
   fi
   
   if [[ $invalid_input == true ]]; then
-    echo "Usage: build.sh [--platform=[macOS, iOS, tvOS]; default=\"macOS\"]"
+    echo "Usage: build.sh [--install-plugins] [--run-all-tests] [--run-most-tests] [--run-quick-tests]"
     exit -1
   fi
 fi
@@ -69,8 +95,8 @@ f.close()
 python3 python_script.py
 
 if [[ "success" != `cat python_messaging.txt` ]]; then
-    echo "OpenMM not installed."
-    exit -1
+  echo "OpenMM not installed."
+  exit -1
 fi
 
 # Extract OpenMM version.
@@ -88,13 +114,19 @@ old_IFS=$IFS
 IFS='.'
 read -a strarr <<< "$openmm_version"
 openmm_version_major=$((strarr[0] + 0)) # Force convert to integer.
+openmm_version_minor=$((strarr[1] + 0)) # Force convert to integer.
 IFS=$old_IFS
 
-# TODO: Check version minor when HIP workaround is patched. Also incorporate
-# this check into the installer script.
+# TODO: Require OpenMM 8.1.0 when the HIP workaround is removed.
 if [[ $openmm_version_major -lt 8 ]]; then
+  echo "OpenMM must be version 8.0.0 or higher."
+  exit -1
+fi
+if [[ $openmm_version_major == 8 ]]; then
+  if [[ $openmm_version_minor -lt 0 ]]; then
     echo "OpenMM must be version 8.0.0 or higher."
     exit -1
+  fi
 fi
 
 # Extract OpenMM install location.
@@ -124,8 +156,18 @@ openmm_include_dir="${openmm_parent_dir}/include"
 # libOpenMMAmoebaMetal.dylib
 # libOpenMMDrudeMetal.dylib
 # libOpenMMRPMDMetal.dylib
+if [[ $run_all_tests == true ]]; then
+  build_tests_flags="-DOPENMM_BUILD_OPENCL_TESTS=1 -DOPENMM_BUILD_LONG_TESTS=1 -DOPENMM_BUILD_VERY_LONG_TESTS=1"
+elif [[ $run_most_tests == true ]]; then
+  build_tests_flags="-DOPENMM_BUILD_OPENCL_TESTS=1 -DOPENMM_BUILD_LONG_TESTS=1 -DOPENMM_BUILD_VERY_LONG_TESTS=0"
+elif [[ $run_quick_tests == true ]]; then
+  build_tests_flags="-DOPENMM_BUILD_OPENCL_TESTS=1 -DOPENMM_BUILD_LONG_TESTS=0"
+else
+  build_tests_flags="-DOPENMM_BUILD_OPENCL_TESTS=0"
+fi
 cmake .. -DCMAKE_INSTALL_PREFIX="/usr/local/openmm" \
   -DOPENMM_DIR=${openmm_parent_dir} \
+  ${build_tests_flags} \
 
 # 4 CPU cores is the most compatible amount of cores across all Mac systems.
 # It doesn't eat into M1 efficiency cores which harm performance, and doesn't
@@ -135,6 +177,17 @@ cmake .. -DCMAKE_INSTALL_PREFIX="/usr/local/openmm" \
 # wouldn't _hurt_ on base M1 and double-overloading a quad-core Intel Mac
 # wouldn't hurt. It won't change performance on the hexa-core Intel Mac mini.
 make -j8
+
+if [[ $install_plugins == true ]]; then
+  sudo make install
+fi
+if [[ $run_all_tests == true ]]; then
+  make test
+elif [[ $run_most_tests == true ]]; then
+  make test
+elif [[ $run_quick_tests == true ]]; then
+  make test
+fi
 
 mv "platforms/metal/libOpenMMMetal.dylib" "libOpenMMMetal.dylib"
 mv "plugins/amoeba/platforms/metal/libOpenMMAmoebaMetal.dylib" "libOpenMMAmoebaMetal.dylib"

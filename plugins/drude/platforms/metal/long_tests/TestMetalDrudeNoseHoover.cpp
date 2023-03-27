@@ -29,7 +29,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "MetalDrudeTests.h"
+#include "../tests/MetalDrudeTests.h"
 #include "TestDrudeNoseHoover.h"
 
 void runPlatformTests() {}

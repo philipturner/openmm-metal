@@ -29,7 +29,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "MetalTests.h"
+#include "../tests/MetalTests.h"
 #include "TestBrownianIntegrator.h"
 
 void runPlatformTests() {

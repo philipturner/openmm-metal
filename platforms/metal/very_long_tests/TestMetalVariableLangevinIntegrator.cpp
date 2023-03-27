@@ -29,8 +29,8 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "MetalTests.h"
-#include "TestVerletIntegrator.h"
+#include "../tests/MetalTests.h"
+#include "TestVariableLangevinIntegrator.h"
 
 void runPlatformTests() {
 }

@@ -29,9 +29,8 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "MetalTests.h"
-#include "TestMonteCarloBarostat.h"
+#include "../tests/MetalTests.h"
+#include "TestLocalEnergyMinimizer.h"
 
 void runPlatformTests() {
-    testWater();
 }
