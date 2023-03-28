@@ -20,6 +20,11 @@ run_quick_tests=false
 
 # TODO: After incorporating mixed precision, make a "very_quick_tests" tier.
 
+# Very quick tests: ones that routinely fail when something is wrong
+# TestMetalCheckpointsSingle
+# TestMetalDispersionPMESingle
+# TestMetalGBSAOBCForceSingle
+
 if [[ $# != 0 ]]; then
   invalid_input=false
   if [[ $# -gt 3 ]]; then
@@ -29,30 +34,30 @@ if [[ $# != 0 ]]; then
   
   if [[ $invalid_input == false ]]; then
     for param in "$@"; do
-      if [[ $param == "--install-plugins" ]]; then
+      if [[ $param == "--install" ]]; then
         if [[ $install_plugin == true ]]; then
-          echo "Duplicate argument '--install-plugins'."
+          echo "Duplicate argument '--install'."
           invalid_input=true
         else
           install_plugins=true
         fi
-      elif [[ $param == "--run-all-tests" ]]; then
+      elif [[ $param == "--all-tests" ]]; then
         if [[ $run_all_tests == true ]]; then
-          echo "Duplicate argument '--run-all-tests'."
+          echo "Duplicate argument '--all-tests'."
           invalid_input=true
         else
           run_all_tests=true
         fi
-      elif [[ $param == "--run-most-tests" ]]; then
+      elif [[ $param == "--most-tests" ]]; then
         if [[ $run_all_tests == true ]]; then
-          echo "Duplicate argument '--run-most-tests'."
+          echo "Duplicate argument '--most-tests'."
           invalid_input=true
         else
           run_most_tests=true
         fi
-      elif [[ $param == "--run-quick-tests" ]]; then
+      elif [[ $param == "--quick-tests" ]]; then
         if [[ $run_all_tests == true ]]; then
-          echo "Duplicate argument '--run-quick-tests'."
+          echo "Duplicate argument '--quick-tests'."
           invalid_input=true
         else
           run_quick_tests=true
@@ -65,7 +70,7 @@ if [[ $# != 0 ]]; then
   fi
   
   if [[ $invalid_input == true ]]; then
-    echo "Usage: build.sh [--install-plugins] [--run-all-tests] [--run-most-tests] [--run-quick-tests]"
+    echo "Usage: build.sh [--install-] [--all-tests] [--most-tests] [--quick-tests]"
     exit -1
   fi
 fi

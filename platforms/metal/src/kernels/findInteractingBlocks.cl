@@ -79,6 +79,12 @@ __kernel void sortBoxData(__global const real2* restrict sortedBlock, __global c
 
 #define BUFFER_SIZE 256
 
+union my_type
+{
+    ushort2 vector_part;
+    uint scalar_part;
+};
+
 __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodicBoxSize, real4 periodicBoxVecX, real4 periodicBoxVecY, real4 periodicBoxVecZ,
         __global unsigned int* restrict interactionCount, __global int* restrict interactingTiles, __global unsigned int* restrict interactingAtoms,
         __global const real4* restrict posq, unsigned int maxTiles, unsigned int startBlockIndex, unsigned int numBlocks, __global real2* restrict sortedBlocks,
@@ -176,7 +182,6 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
 #endif
                 if (includeBlock2) {
                     int y = (int) sortedBlocks[block2].y;
-                    // TODO: Try force-unrolling optimization from CUDA on Apple
                     for (int k = 0; k < numExclusions; k++)
                         includeBlock2 &= (exclusionsForX[k] != y);
                 }
@@ -302,8 +307,26 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
                         if (newTileStartIndex+tilesToStore <= maxTiles) {
                             if (indexInWarp < tilesToStore)
                                 interactingTiles[newTileStartIndex+indexInWarp] = x;
+                                                        
+#ifdef VENDOR_APPLE
+                            int j = 0;
+                            int tilesToStoreEnd = ~7 & tilesToStore;
+                            for (; j < tilesToStoreEnd; j += 8) {
+                                interactingAtoms[(newTileStartIndex+j)*TILE_SIZE+indexInWarp] = buffer[indexInWarp+j*TILE_SIZE];
+                                interactingAtoms[(newTileStartIndex+(j+1))*TILE_SIZE+indexInWarp] = buffer[indexInWarp+(j+1)*TILE_SIZE];
+                                interactingAtoms[(newTileStartIndex+(j+2))*TILE_SIZE+indexInWarp] = buffer[indexInWarp+(j+2)*TILE_SIZE];
+                                interactingAtoms[(newTileStartIndex+(j+3))*TILE_SIZE+indexInWarp] = buffer[indexInWarp+(j+3)*TILE_SIZE];
+                                interactingAtoms[(newTileStartIndex+(j+4))*TILE_SIZE+indexInWarp] = buffer[indexInWarp+(j+4)*TILE_SIZE];
+                                interactingAtoms[(newTileStartIndex+(j+5))*TILE_SIZE+indexInWarp] = buffer[indexInWarp+(j+5)*TILE_SIZE];
+                                interactingAtoms[(newTileStartIndex+(j+6))*TILE_SIZE+indexInWarp] = buffer[indexInWarp+(j+6)*TILE_SIZE];
+                                interactingAtoms[(newTileStartIndex+(j+7))*TILE_SIZE+indexInWarp] = buffer[indexInWarp+(j+7)*TILE_SIZE];
+                            }
+                            for (; j < tilesToStore; j++)
+                                interactingAtoms[(newTileStartIndex+j)*TILE_SIZE+indexInWarp] = buffer[indexInWarp+j*TILE_SIZE];
+#else
                             for (int j = 0; j < tilesToStore; j++)
                                 interactingAtoms[(newTileStartIndex+j)*TILE_SIZE+indexInWarp] = buffer[indexInWarp+j*TILE_SIZE];
+#endif
                         }
                         if (indexInWarp+TILE_SIZE*tilesToStore < BUFFER_SIZE)
                             buffer[indexInWarp] = buffer[indexInWarp+TILE_SIZE*tilesToStore];
@@ -329,6 +352,7 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
             if (newTileStartIndex+tilesToStore <= maxTiles) {
                 if (indexInWarp < tilesToStore)
                     interactingTiles[newTileStartIndex+indexInWarp] = x;
+                // TODO: Try force-unrolling optimization from CUDA on Apple
                 for (int j = 0; j < tilesToStore; j++)
                     interactingAtoms[(newTileStartIndex+j)*TILE_SIZE+indexInWarp] = (indexInWarp+j*TILE_SIZE < neighborsInBuffer ? buffer[indexInWarp+j*TILE_SIZE] : NUM_ATOMS);
             }
