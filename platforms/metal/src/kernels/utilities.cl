@@ -108,14 +108,37 @@ __kernel void reduceForces(__global long* restrict longBuffer, __global real4* r
 __kernel void reduceEnergy(__global const mixed* restrict energyBuffer, __global mixed* restrict result, int bufferSize, int workGroupSize, __local mixed* tempBuffer) {
     const unsigned int thread = get_local_id(0);
     mixed sum = 0;
+    // TODO: Try reduceEnergy optimization after incorporating mixed precision.
     for (unsigned int index = thread; index < bufferSize; index += get_local_size(0))
         sum += energyBuffer[index];
+    
+#ifdef VENDOR_APPLE
+    sum = sub_group_reduce_add(sum);
+    
+    // Do a conditional check, only write if you're the first thread of the SIMD.
+    if (simd_is_first()) {
+        tempBuffer[thread] = sum;
+        
+        barrier(CLK_LOCAL_MEM_FENCE);
+        if (thread%(32*2) == 0 && thread+32 < workGroupSize)
+            tempBuffer[thread] += tempBuffer[thread+32];
+        
+        barrier(CLK_LOCAL_MEM_FENCE);
+        if (thread%(64*2) == 0 && thread+64 < workGroupSize)
+            tempBuffer[thread] += tempBuffer[thread+64];
+        
+        barrier(CLK_LOCAL_MEM_FENCE);
+        if (thread%(128*2) == 0 && thread+128 < workGroupSize)
+            tempBuffer[thread] += tempBuffer[thread+128];
+    }
+#else
     tempBuffer[thread] = sum;
     for (int i = 1; i < workGroupSize; i *= 2) {
         barrier(CLK_LOCAL_MEM_FENCE);
         if (thread%(i*2) == 0 && thread+i < workGroupSize)
             tempBuffer[thread] += tempBuffer[thread+i];
     }
+#endif
     if (thread == 0)
         *result = tempBuffer[0];
 }
