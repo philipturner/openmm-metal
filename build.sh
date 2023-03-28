@@ -23,6 +23,7 @@ run_quick_tests=false
 # Very quick tests: ones that routinely fail when something is wrong
 # TestMetalCheckpointsSingle
 # TestMetalDispersionPMESingle
+# TestMetalEwaldSingle
 # TestMetalGBSAOBCForceSingle
 
 if [[ $# != 0 ]]; then

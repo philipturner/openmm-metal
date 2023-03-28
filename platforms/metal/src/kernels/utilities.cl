@@ -115,7 +115,8 @@ __kernel void reduceEnergy(__global const mixed* restrict energyBuffer, __global
 #ifdef VENDOR_APPLE
     sum = sub_group_reduce_add(sum);
     
-    // Do a conditional check, only write if you're the first thread of the SIMD.
+    // Only write if you're the first thread of the SIMD.
+    // This saves threadgroup bandwidth.
     if (simd_is_first()) {
         tempBuffer[thread] = sum;
         

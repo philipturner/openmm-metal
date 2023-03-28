@@ -223,6 +223,11 @@ MetalContext::MetalContext(const System& system, int platformIndex, int deviceIn
         compilationDefines["WORK_GROUP_SIZE"] = intToString(ThreadBlockSize);
         if (platformVendor.size() >= 5 && platformVendor.substr(0, 5) == "Intel")
             defaultOptimizationOptions = "";
+#if __APPLE__ && defined(__aarch64__)
+        else if (useMixedPrecision)
+            // '-cl-no-signed-zeros' breaks double-single FP64 emulation.
+            defaultOptimizationOptions = "-cl-mad-enable";
+#endif
         else
             defaultOptimizationOptions = "-cl-mad-enable -cl-no-signed-zeros";
         supports64BitGlobalAtomics = (device.getInfo<CL_DEVICE_EXTENSIONS>().find("cl_khr_int64_base_atomics") != string::npos);
