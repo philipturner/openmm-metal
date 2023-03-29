@@ -25,6 +25,7 @@ run_quick_tests=false
 # TestMetalDispersionPMESingle
 # TestMetalEwaldSingle
 # TestMetalGBSAOBCForceSingle
+# Use cmake -R to run these tests, otherwise compiling the same as --quick-tests.
 
 if [[ $# != 0 ]]; then
   invalid_input=false
