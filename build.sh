@@ -18,7 +18,7 @@ run_most_tests=false
 # less than ~5 seconds.
 run_quick_tests=false
 
-# TODO: After incorporating mixed precision, make a "very_quick_tests" tier.
+# TODO: After incorporating mixed precision, re-partition the test suite.
 
 # Very quick tests: ones that routinely fail when something is wrong
 # TestMetalCheckpointsSingle
