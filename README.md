@@ -4,7 +4,7 @@
 
 > WARNING: Only use with M1/M2-series for now. This plugin has not been fully tested on Intel Macs and seems to cause bugs there. <!--Precompiled binaries will be released once these issues are resolved.-->
 
-This plugin adds the Metal platform that accelerates [OpenMM](https://openmm.org) on Metal 3 GPUs. It supports Apple, AMD, and Intel GPUs running macOS 13\* or higher. The current implementation uses Apple's OpenCL compatiblity layer (`cl2Metal`) to translate OpenCL kernels to AIR. Its current focus is implementing patches for OpenMM's code base that improve performance on macOS. It distributes the patches in a way easily accessible to most users, who would otherwise wait for them to be upstreamed. As a beta version of the patches, this may cause unexpected bugs or performance regressions.
+This plugin adds the Metal platform that accelerates [OpenMM](https://openmm.org) on Metal 3 GPUs. It supports Apple, AMD, and Intel GPUs running macOS 13\* or higher. <i>It may eventually support iOS 16 for [usage in AR](https://github.com/philipturner/molecular-renderer)</i>. The current implementation uses Apple's OpenCL compatiblity layer (`cl2Metal`) to translate OpenCL kernels to AIR. Its current focus is implementing patches for OpenMM's code base that improve performance on macOS. It distributes the patches in a way easily accessible to most users, who would otherwise wait for them to be upstreamed. As a beta version of the patches, this may cause unexpected bugs or performance regressions.
 
 > \* The current version supports macOS Monterey. Ventura will only be required after the transition to Metal.
 
