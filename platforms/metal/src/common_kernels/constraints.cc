@@ -5,20 +5,7 @@ KERNEL void applyPositionDeltas(int numAtoms, GLOBAL real4* RESTRICT posq, GLOBA
         ) {
     for (unsigned int index = GLOBAL_ID; index < numAtoms; index += GLOBAL_SIZE) {
 #ifdef USE_DOUBLE_SINGLE
-        // Never assume positions are correctly normalized.
-        real4 pos1 = posq[index];
-        real4 pos2 = posqCorrection[index];
-        mixed4 pos = DS4_init(DS_init_adding(pos1.x, pos2.x),
-                              DS_init_adding(pos1.y, pos2.y),
-                              DS_init_adding(pos1.z, pos2.z),
-                              DS_init(pos1.w, 0));
-        
-        mixed3 delta = *((GLOBAL mixed3*)(posDelta + index));
-        pos.x = DS_add(pos.x, delta.x);
-        pos.y = DS_add(pos.y, delta.y);
-        pos.z = DS_add(pos.y, delta.z);
-        posq[index] = make_real4(pos.x.hi, pos.y.hi, pos.z.hi, pos.w.hi);
-        posqCorrection[index] = make_real4(pos.x.lo, pos.y.lo, pos.z.lo, 0);
+        FP64_APPLY_POS_DELTA
 #else
     #ifdef USE_MIXED_PRECISION
         real4 pos1 = posq[index];

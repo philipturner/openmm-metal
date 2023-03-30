@@ -52,10 +52,18 @@ KERNEL void computePerDof(GLOBAL real4* RESTRICT posq, GLOBAL real4* RESTRICT po
         GLOBAL mixed* RESTRICT sum, GLOBAL const float4* RESTRICT gaussianValues, unsigned int gaussianBaseIndex, GLOBAL const float4* RESTRICT uniformValues,
         const mixed energy, GLOBAL mixed* RESTRICT energyParamDerivs
         PARAMETER_ARGUMENTS) {
-    TempType3 stepSize = make_TempType3(dt[0].y);
     int index = GLOBAL_ID;
+#ifdef USE_DOUBLE_SINGLE
+    DS stepSize_y = dt[0].y;
+    DS3 stepSize = DS3_init(stepSize_y, stepSize_y, stepSize_y);
+    // TODO: Calculate `forceScale` statically.
+    const DS forceScale = DS_recip(0xFFFFFFFF);
+#else
+    TempType3 stepSize = make_TempType3(dt[0].y);
     const TempType forceScale = ((TempType) 1)/0xFFFFFFFF;
+#endif
     while (index < NUM_ATOMS) {
+        // TODO: Continue porting OpenMM here.
 #ifdef LOAD_POS_AS_DELTA
         TempType4 position = loadPos(posq, posqCorrection, index) + convertToTempType4(posDelta[index]);
 #else

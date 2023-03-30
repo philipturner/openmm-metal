@@ -56,6 +56,14 @@ DS DS_init(float hi, float lo) {
   return output;
 }
 
+DS3 DS3_init(DS x, DS y, DS z) {
+  DS3 output;
+  output.x = x;
+  output.y = y;
+  output.z = z;
+  return output;
+}
+
 DS3 DS3_init_DS4(DS4 input) {
   DS3 output;
   output.x = input.x;
@@ -70,6 +78,15 @@ DS4 DS4_init(DS x, DS y, DS z, DS w) {
   output.y = y;
   output.z = z;
   output.w = w;
+  return output;
+}
+
+DS4 DS4_init_zero() {
+  DS4 output;
+  output.x = DS_init(0, 0);
+  output.y = DS_init(0, 0);
+  output.z = DS_init(0, 0);
+  output.w = DS_init(0, 0);
   return output;
 }
 
@@ -255,6 +272,22 @@ DS DS_init_ulong_fast(long value) {
   output.lo = float(value - ulong(output.hi));
   return output;
 }
+
+// Never assume positions are correctly normalized.
+#define FP64_APPLY_POS_DELTA \
+real4 pos1 = posq[index]; \
+real4 pos2 = posqCorrection[index]; \
+mixed4 pos = DS4_init(DS_init_adding(pos1.x, pos2.x), \
+                      DS_init_adding(pos1.y, pos2.y), \
+                      DS_init_adding(pos1.z, pos2.z), \
+                      DS_init(pos1.w, 0)); \
+\
+mixed3 delta = *((GLOBAL mixed3*)(posDelta + index)); \
+pos.x = DS_add(pos.x, delta.x); \
+pos.y = DS_add(pos.y, delta.y); \
+pos.z = DS_add(pos.y, delta.z); \
+posq[index] = make_real4(pos.x.hi, pos.y.hi, pos.z.hi, pos.w.hi); \
+posqCorrection[index] = make_real4(pos.x.lo, pos.y.lo, pos.z.lo, 0); \
 
 #endif // USE_MIXED_PRECISION
 #endif // VENDOR_APPLE

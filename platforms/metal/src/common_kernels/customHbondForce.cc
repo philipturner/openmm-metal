@@ -50,7 +50,11 @@ KERNEL void computeDonorForces(
         real4 periodicBoxVecX, real4 periodicBoxVecY, real4 periodicBoxVecZ
         PARAMETER_ARGUMENTS) {
     LOCAL real4 posBuffer[3*THREAD_BLOCK_SIZE];
+#ifdef USE_DOUBLE_SINGLE
+    mixed energy = DS_init(0, 0);
+#else
     mixed energy = 0;
+#endif
     real3 f1 = make_real3(0);
     real3 f2 = make_real3(0);
     real3 f3 = make_real3(0);
@@ -130,7 +134,11 @@ KERNEL void computeDonorForces(
             }
         }
     }
+#ifdef USE_DOUBLE_SINGLE
+    energyBuffer[GLOBAL_ID] = DS_add(energyBuffer[GLOBAL_ID], energy);
+#else
     energyBuffer[GLOBAL_ID] += energy;
+#endif
 }
 /**
  * Compute forces on acceptors.
