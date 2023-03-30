@@ -512,12 +512,3 @@ void sub_group_barrier(cl_mem_fence_flags flags)
 #endif /* metal_stdlib_h */
 
 #endif // VENDOR_APPLE
-
-#ifdef VENDOR_APPLE
-#ifdef USE_MIXED_PRECISION
-#define USE_DOUBLE_SINGLE
-
-// TODO: Include double-single header.
-
-#endif // USE_MIXED_PRECISION
-#endif // VENDOR_APPLE
