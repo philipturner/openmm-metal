@@ -67,20 +67,12 @@ KERNEL void computeGroupCenters(int numParticleGroups, GLOBAL const real4* RESTR
 KERNEL void computeGroupForces(int numParticleGroups, GLOBAL mm_ulong* RESTRICT groupForce, GLOBAL mixed* RESTRICT energyBuffer, GLOBAL const real4* RESTRICT centerPositions,
         GLOBAL const int* RESTRICT bondGroups, real4 periodicBoxSize, real4 invPeriodicBoxSize, real4 periodicBoxVecX, real4 periodicBoxVecY, real4 periodicBoxVecZ
         EXTRA_ARGS) {
-#ifdef USE_DOUBLE_SINGLE
-    mixed energy = DS_init(0, 0);
-#else
-    mixed energy = 0;
-#endif
+    DECLARE_ENERGY
     INIT_PARAM_DERIVS
     for (int index = GLOBAL_ID; index < NUM_BONDS; index += GLOBAL_SIZE) {
         COMPUTE_FORCE
     }
-#ifdef USE_DOUBLE_SINGLE
-    energyBuffer[GLOBAL_ID] = DS_add(energyBuffer[GLOBAL_ID], energy);
-#else
-    energyBuffer[GLOBAL_ID] += energy;
-#endif
+    STORE_ENERGY
     SAVE_PARAM_DERIVS
 }
 

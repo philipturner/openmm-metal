@@ -57,11 +57,7 @@ KERNEL void computeInteraction(
         , GLOBAL int* RESTRICT exclusions, GLOBAL int* RESTRICT exclusionStartIndex
 #endif
         PARAMETER_ARGUMENTS) {
-#if USE_DOUBLE_SINGLE
-    mixed energy = DS_init(0, 0);
-#else
-    mixed energy = 0;
-#endif
+    DECLARE_ENERGY
     
     // Loop over particles to be the first one in the set.
     
@@ -107,11 +103,7 @@ KERNEL void computeInteraction(
             }
         }
     }
-#ifdef USE_DOUBLE_SINGLE
-    FP64_STORE_ENERGY
-#else
-    energyBuffer[GLOBAL_ID] += energy;
-#endif
+    STORE_ENERGY
 }
 
 /**

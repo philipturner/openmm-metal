@@ -45,11 +45,7 @@ KERNEL void computeInteractionGroups(
     const unsigned int warp = GLOBAL_ID/TILE_SIZE; // global warpIndex
     const unsigned int tgx = LOCAL_ID & (TILE_SIZE-1); // index within the warp
     const unsigned int tbx = LOCAL_ID - tgx;           // block warpIndex
-#ifdef USE_DOUBLE_SINGLE
-    mixed energy = DS_init(0, 0);
-#else
-    mixed energy = 0;
-#endif
+    DECLARE_ENERGY
     INIT_DERIVATIVES
     LOCAL AtomData localData[LOCAL_MEMORY_SIZE];
     LOCAL int reductionBuffer[LOCAL_MEMORY_SIZE];
@@ -127,11 +123,7 @@ KERNEL void computeInteractionGroups(
         ATOMIC_ADD(&forceBuffers[atom2+2*PADDED_NUM_ATOMS], (mm_ulong) realToFixedPoint(localData[LOCAL_ID].fz));
         SYNC_WARPS;
     }
-#ifdef USE_DOUBLE_SINGLE
-    FP64_STORE_ENERGY
-#else
-    energyBuffer[GLOBAL_ID] += energy;
-#endif
+    STORE_ENERGY
     SAVE_DERIVATIVES
 }
 

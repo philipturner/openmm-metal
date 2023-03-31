@@ -75,6 +75,10 @@ INCLUDE_DIRECTORIES(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 # Encode the common kernel sources into a C++ class
 
+# TODO: This is bugging out. It is copying directly from OpenMM, despite me
+# telling it to copy from my custom clone. That means for the past few days,
+# I have been "testing" source modifications without determining whether they
+# damage the code. I need to fix that before making any more progress.
 SET(KERNEL_SOURCE_DIR ${OPENMM_SOURCE_DIR}/platforms/common/src)
 SET(KERNEL_SOURCE_CLASS CommonKernelSources)
 SET(KERNELS_CPP ${CMAKE_CURRENT_BINARY_DIR}/src/${KERNEL_SOURCE_CLASS}.cpp)
