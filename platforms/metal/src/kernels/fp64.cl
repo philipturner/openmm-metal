@@ -90,6 +90,20 @@ DS4 DS4_init_zero() {
   return output;
 }
 
+DS4 DS4_init_split(float4 hi, float4 lo) {
+    DS4 output;
+    output.x.hi = hi.x;
+    output.y.hi = hi.y;
+    output.z.hi = hi.z;
+    output.w.hi = hi.w;
+    
+    output.x.lo = lo.x;
+    output.y.lo = lo.y;
+    output.z.lo = lo.z;
+    output.w.lo = lo.w;
+    return output;
+}
+
 DS DS_negated(DS input) {
   return DS_init(-input.hi, -input.lo);
 }
@@ -288,6 +302,9 @@ pos.y = DS_add(pos.y, delta.y); \
 pos.z = DS_add(pos.y, delta.z); \
 posq[index] = make_real4(pos.x.hi, pos.y.hi, pos.z.hi, pos.w.hi); \
 posqCorrection[index] = make_real4(pos.x.lo, pos.y.lo, pos.z.lo, 0); \
+
+#define FP64_STORE_ENERGY \
+energyBuffer[GLOBAL_ID] = DS_init(energyBuffer[GLOBAL_ID], energy); \
 
 #endif // USE_MIXED_PRECISION
 #endif // VENDOR_APPLE

@@ -47,6 +47,9 @@ inline DEVICE void storePos(GLOBAL real4* RESTRICT posq, GLOBAL real4* RESTRICT 
 #endif
 }
 
+// TODO: Investigate why this is always FP64 even in `single` mode, perhaps
+// always use double-single on Apple platforms. This would require prepending
+// the "fp64.cl" header to the current OpenCL file.
 KERNEL void computePerDof(GLOBAL real4* RESTRICT posq, GLOBAL real4* RESTRICT posqCorrection, GLOBAL mixed4* RESTRICT posDelta,
         GLOBAL mixed4* RESTRICT velm, GLOBAL const mm_long* RESTRICT force, GLOBAL const mixed2* RESTRICT dt, GLOBAL const mixed* RESTRICT globals,
         GLOBAL mixed* RESTRICT sum, GLOBAL const float4* RESTRICT gaussianValues, unsigned int gaussianBaseIndex, GLOBAL const float4* RESTRICT uniformValues,
@@ -63,16 +66,32 @@ KERNEL void computePerDof(GLOBAL real4* RESTRICT posq, GLOBAL real4* RESTRICT po
     const TempType forceScale = ((TempType) 1)/0xFFFFFFFF;
 #endif
     while (index < NUM_ATOMS) {
-        // TODO: Continue porting OpenMM here.
-#ifdef LOAD_POS_AS_DELTA
-        TempType4 position = loadPos(posq, posqCorrection, index) + convertToTempType4(posDelta[index]);
+#ifdef USE_DOUBLE_SINGLE
+        DS4 position = DS4_init_split(posq[index], posqCorrection[index]);
+    #ifdef LOAD_POS_AS_DELTA
+        position = DS4_add(position, posDelta[index]);
+    #endif
+        DS4 velocity = velm[index];
+        DS3 f = DS3_init(DS3_mul(forceScale, DS_init_long(force[index])),
+                         DS3_mul(forceScale, DS_init_long(force[index+PADDED_NUM_atoms])),
+                         DS3_mul(forceScale, DS_init_long(force[index+PADDED_NUM_atoms*2])));
+        
+        // Never assume velocities are correctly normalized.
+        velocity.w = DS_normalize(velocity.w);
+        DS _mass_scalar = DS_recip(velocity.w);
+        DS3 mass = DS3_init(_mass_scalar, _mass_scalar, _mass_scalar);
+        if (velocity.w.hi != 0.0) {
 #else
+    #ifdef LOAD_POS_AS_DELTA
+        TempType4 position = loadPos(posq, posqCorrection, index) + convertToTempType4(posDelta[index]);
+    #else
         TempType4 position = loadPos(posq, posqCorrection, index);
-#endif
+    #endif
         TempType4 velocity = convertToTempType4(velm[index]);
         TempType3 f = make_TempType3(forceScale*force[index], forceScale*force[index+PADDED_NUM_ATOMS], forceScale*force[index+PADDED_NUM_ATOMS*2]);
         TempType3 mass = make_TempType3(RECIP(velocity.w));
         if (velocity.w != 0.0) {
+#endif
             int gaussianIndex = gaussianBaseIndex;
             int uniformIndex = 0;
             COMPUTE_STEP
