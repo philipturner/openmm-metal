@@ -702,6 +702,11 @@ cl::Program MetalContext::createProgram(const string source, const map<string, s
         src << "typedef float4 mixed4;\n";
     }
     src << MetalKernelSources::common << endl;
+#if __APPLE__ && defined(__aarch64__)
+    if (useMixedPrecision) {
+        src << MetalKernelSources::fp64 << endl;
+    }
+#endif
     for (auto& pair : defines) {
         src << "#define " << pair.first;
         if (!pair.second.empty())

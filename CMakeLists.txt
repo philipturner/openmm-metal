@@ -73,7 +73,7 @@ SET (CMAKE_INSTALL_NAME_DIR "@rpath")
 IF (X86)
   SET(EXTRA_COMPILE_FLAGS "-msse2")
 ENDIF()
-SET(EXTRA_COMPILE_FLAGS "${EXTRA_COMPILE_FLAGS} -stdlib=libc++")
+SET(EXTRA_COMPILE_FLAGS "${EXTRA_COMPILE_FLAGS} -stdlib=libc++ -Wno-deprecated-declarations")
 SET(EXTRA_LINK_FLAGS ${EXTRA_COMPILE_FLAGS})
 
 # Make sure that Lepton::CompiledExpression class has the same structure as in the main library

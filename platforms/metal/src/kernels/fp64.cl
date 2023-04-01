@@ -1,6 +1,4 @@
-#ifdef VENDOR_APPLE
-#ifdef USE_MIXED_PRECISION
-#define USE_DOUBLE_SINGLE
+#ifdef USE_DOUBLE_SINGLE
 
 //
 //  fp64.cl
@@ -303,24 +301,4 @@ pos.z = DS_add(pos.y, delta.z); \
 posq[index] = make_real4(pos.x.hi, pos.y.hi, pos.z.hi, pos.w.hi); \
 posqCorrection[index] = make_real4(pos.x.lo, pos.y.lo, pos.z.lo, 0); \
 
-#define FP64_STORE_ENERGY \
-energyBuffer[GLOBAL_ID] = DS_init(energyBuffer[GLOBAL_ID], energy); \
-
-#endif // USE_MIXED_PRECISION
-#endif // VENDOR_APPLE
-
-#ifdef USE_DOUBLE_SINGLE
-#define DECLARE_ENERGY \
-mixed energy = DS_init(0, 0);
-
-#define STORE_ENERGY \
-energyBuffer[GLOBAL_ID] = DS_init(energyBuffer[GLOBAL_ID], energy); \
-
-#else
-#define DECLARE_ENERGY \
-mixed energy = 0;
-
-#define STORE_ENERGY \
-energyBuffer[GLOBAL_ID] += energy; \
-
-#endif
+#endif // USE_DOUBLE_SINGLE

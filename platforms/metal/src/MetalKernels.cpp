@@ -713,7 +713,7 @@ void MetalCalcNonbondedForceKernel::initialize(const System& system, const Nonbo
             replacements["EXP_COEFFICIENT"] = cl.doubleToString(-1.0/(4.0*alpha*alpha));
             replacements["ONE_4PI_EPS0"] = cl.doubleToString(ONE_4PI_EPS0);
             replacements["M_PI"] = cl.doubleToString(M_PI);
-            cl::Program program = cl.createProgram(CommonKernelSources::ewald, replacements);
+            cl::Program program = cl.createProgram(MetalKernelSources::ewald, replacements);
             ewaldSumsKernel = cl::Kernel(program, "calculateEwaldCosSinSums");
             ewaldForcesKernel = cl::Kernel(program, "calculateEwaldForces");
             int elementSize = (cl.getUseDoublePrecision() ? sizeof(mm_double2) : sizeof(mm_float2));
@@ -778,7 +778,7 @@ void MetalCalcNonbondedForceKernel::initialize(const System& system, const Nonbo
                 try {
                     cpuPme = getPlatform().createKernel(CalcPmeReciprocalForceKernel::Name(), *cl.getPlatformData().context);
                     cpuPme.getAs<CalcPmeReciprocalForceKernel>().initialize(gridSizeX, gridSizeY, gridSizeZ, numParticles, alpha, false);
-                    cl::Program program = cl.createProgram(CommonKernelSources::pme, pmeDefines);
+                    cl::Program program = cl.createProgram(MetalKernelSources::pme, pmeDefines);
                     cl::Kernel addForcesKernel = cl::Kernel(program, "addForces");
                     pmeio = new PmeIO(cl, addForcesKernel);
                     cl.addPreComputation(new PmePreComputation(cl, cpuPme, *pmeio));
@@ -946,13 +946,13 @@ void MetalCalcNonbondedForceKernel::initialize(const System& system, const Nonbo
             if (doLJPME)
                 replacements["EWALD_DISPERSION_ALPHA"] = cl.doubleToString(dispersionAlpha);
             if (force.getIncludeDirectSpace())
-                cl.getBondedUtilities().addInteraction(atoms, cl.replaceStrings(CommonKernelSources::pmeExclusions, replacements), force.getForceGroup());
+                cl.getBondedUtilities().addInteraction(atoms, cl.replaceStrings(MetalKernelSources::pmeExclusions, replacements), force.getForceGroup());
         }
     }
 
     // Add the interaction to the default nonbonded kernel.
     
-    string source = cl.replaceStrings(CommonKernelSources::coulombLennardJones, defines);
+    string source = cl.replaceStrings(MetalKernelSources::coulombLennardJones, defines);
     charges.initialize(cl, cl.getPaddedNumAtoms(), cl.getUseDoublePrecision() ? sizeof(double) : sizeof(float), "charges");
     baseParticleParams.initialize<mm_float4>(cl, cl.getPaddedNumAtoms(), "baseParticleParams");
     baseParticleParams.upload(baseParticleParamVec);
@@ -1002,7 +1002,7 @@ void MetalCalcNonbondedForceKernel::initialize(const System& system, const Nonbo
         replacements["APPLY_PERIODIC"] = (usePeriodic && force.getExceptionsUsePeriodicBoundaryConditions() ? "1" : "0");
         replacements["PARAMS"] = cl.getBondedUtilities().addArgument(exceptionParams.getDeviceBuffer(), "float4");
         if (force.getIncludeDirectSpace())
-            cl.getBondedUtilities().addInteraction(atoms, cl.replaceStrings(CommonKernelSources::nonbondedExceptions, replacements), force.getForceGroup());
+            cl.getBondedUtilities().addInteraction(atoms, cl.replaceStrings(MetalKernelSources::nonbondedExceptions, replacements), force.getForceGroup());
     }
     
     // Initialize parameter offsets.
@@ -1077,7 +1077,7 @@ void MetalCalcNonbondedForceKernel::initialize(const System& system, const Nonbo
     
     // Initialize the kernel for updating parameters.
     
-    cl::Program program = cl.createProgram(CommonKernelSources::nonbondedParameters, paramsDefines);
+    cl::Program program = cl.createProgram(MetalKernelSources::nonbondedParameters, paramsDefines);
     computeParamsKernel = cl::Kernel(program, "computeParameters");
     computeExclusionParamsKernel = cl::Kernel(program, "computeExclusionParameters");
     info = new ForceInfo(0, force);
@@ -1127,7 +1127,7 @@ double MetalCalcNonbondedForceKernel::execute(ContextImpl& context, bool include
             
             map<string, string> replacements;
             replacements["CHARGE"] = (usePosqCharges ? "pos.w" : "charges[atom]");
-            cl::Program program = cl.createProgram(cl.replaceStrings(CommonKernelSources::pme, replacements), pmeDefines);
+            cl::Program program = cl.createProgram(cl.replaceStrings(MetalKernelSources::pme, replacements), pmeDefines);
             pmeGridIndexKernel = cl::Kernel(program, "findAtomGridIndex");
             pmeSpreadChargeKernel = cl::Kernel(program, "gridSpreadCharge");
             pmeConvolutionKernel = cl::Kernel(program, "reciprocalConvolution");
@@ -1171,7 +1171,7 @@ double MetalCalcNonbondedForceKernel::execute(ContextImpl& context, bool include
                 pmeDefines["RECIP_EXP_FACTOR"] = cl.doubleToString(M_PI*M_PI/(dispersionAlpha*dispersionAlpha));
                 pmeDefines["USE_LJPME"] = "1";
                 pmeDefines["CHARGE_FROM_SIGEPS"] = "1";
-                program = cl.createProgram(CommonKernelSources::pme, pmeDefines);
+                program = cl.createProgram(MetalKernelSources::pme, pmeDefines);
                 pmeDispersionGridIndexKernel = cl::Kernel(program, "findAtomGridIndex");
                 pmeDispersionSpreadChargeKernel = cl::Kernel(program, "gridSpreadCharge");
                 pmeDispersionConvolutionKernel = cl::Kernel(program, "reciprocalConvolution");
