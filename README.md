@@ -84,7 +84,7 @@ Quick tests:
 
 |                     | Apple | AMD | Intel |
 | ------------------- | ----- | --- | ----- |
-| Last tested version | pre-release   | n/a | pre-release   |
+| Last tested version | 1.0.0   | n/a | 1.0.0   |
 
 | Test                           | Apple F32 | Apple F64 | AMD F32 | AMD F64 | Intel F32 | Intel F64 |
 | ------------------------------ | ----------- | ----------- | --------- | --------- | ----------- | ----------- |
@@ -131,7 +131,7 @@ Long tests:
 
 |                     | Apple | AMD | Intel |
 | ------------------- | ----- | --- | ----- |
-| Last tested version | pre-release   | n/a | pre-release   |
+| Last tested version | 1.0.0   | n/a | 1.0.0  |
 
 | Test                           | Apple F32 | Apple F64 | AMD F32 | AMD F64 | Intel F32 | Intel F64 |
 | ------------------------------ | ----------- | ----------- | --------- | --------- | ----------- | ----------- |
@@ -151,7 +151,7 @@ Very long tests:
 
 |                     | Apple | AMD | Intel |
 | ------------------- | ----- | --- | ----- |
-| Last tested version | pre-release   | n/a | n/a   |
+| Last tested version | 1.0.0   | n/a | n/a   |
 
 
 | Test                           | Apple F32 | Apple F64 | AMD F32 | AMD F64 | Intel F32 | Intel F64 |
