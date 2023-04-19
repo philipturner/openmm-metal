@@ -117,27 +117,53 @@ Quick tests:
 | Settle                         |            |            | -         | -         |            |            |
 | Sort                           |            |            | -         | -         |            |            |
 | VariableVerlet                 |            |            | -         | -         |            |            |
+| AmoebaExtrapolatedPolarization |            |            | -         | -         |            |            |
+| AmoebaGeneralizedKirkwoodForce |            |            | -         | -         |            |            |
+| AmoebaMultipoleForce           |            |            | -         | -         |            |            |
+| AmoebaTorsionTorsionForce      |            |            | -         | -         |            |            |
+| AmoebaVdwForce                 |            |            | -         | -         |            |            |
+| HippoNonbondedForce            |            |            | -         | -         |            |            |
+| WcaDispersionForce             |            |            | -         | -         |            |            |
+| DrudeForce                     |            |            | -         | -         |            |            |
 
 Long tests:
 
 |                     | Apple | AMD | Intel |
 | ------------------- | ----- | --- | ----- |
-| Last tested version | n/a   | n/a | n/a   |
+| Last tested version | pre-release   | n/a | pre-release   |
 
 | Test                           | Apple (F32) | Apple (F64) | AMD (F32) | AMD (F64) | Intel (F32) | Intel (F64) |
 | ------------------------------ | ----------- | ----------- | --------- | --------- | ----------- | ----------- |
-|                                |            |            | -         | -         |            |            |
+| AndersenThermostat             |            |            | -         | -         |            |            |
+| CustomManyParticleForce        |            |            | -         | -         |            |            |
+| CustomNonbondedForce           |            |            | -         | -         |            |            |
+| LangevinIntegrator             |            |            | -         | -         |            |            |
+| LangevinMiddleIntegrator       |            |            | -         | -         |            |            |
+| LocalEnergyMinimizer           |            |            | -         | -         |            |            |
+| MonteCarloFlexibleBarostat     |            |            | -         | -         |            |            |
+| NonbondedForce                 |            |            | -         | -         |            |            |
+| VerletIntegrator               |            |            | -         | -         |            |            |
+| VirtualSites                   |            |            | -         | -         |            |            |
+| DrudeNoseHoover                |            |            | -         | -         |            |            |
 
 Very long tests:
 
 |                     | Apple | AMD | Intel |
 | ------------------- | ----- | --- | ----- |
-| Last tested version | n/a   | n/a | n/a   |
+| Last tested version | pre-release   | n/a | n/a   |
 
 
 | Test                           | Apple (F32) | Apple (F64) | AMD (F32) | AMD (F64) | Intel (F32) | Intel (F64) |
 | ------------------------------ | ----------- | ----------- | --------- | --------- | ----------- | ----------- |
-|                                |            |            | -         | -         |            |            |
+| BrownianIntegrator             |            |            | -         | -         | -           | -           |
+| CustomIntegrator               |            |            | -         | -         | -           | -           |
+| MonteCarloAnisotropicBarostat  |            |            | -         | -         | -           | -           |
+| MonteCarloBarostat             |            |            | -         | -         | -           | -           |
+| NoseHooverIntegrator           |            |            | -         | -         | -           | -           |
+| VariableLangevinIntegrator     |            |            | -         | -         | -           | -           |
+| RpmdParaHydrogen               |            |            | -         | -         | -           | -           |
+| DrudeLangevinIntegrator        |            |            | -         | -         | -           | -           |
+| DrudeSCFIntegrator             |            |            | -         | -         | -           | -           |
 
 ## License
 
