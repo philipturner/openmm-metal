@@ -85,46 +85,46 @@ Quick tests:
 | ------------------- | ----- | --- | ----- |
 | Last tested version | pre-release   | n/a | pre-release   |
 
-| Test                           | Apple (F32) | Apple (F64) | AMD (F32) | AMD (F64) | Intel (F32) | Intel (F64) |
+| Test                           | Apple F32 | Apple F64 | AMD F32 | AMD F64 | Intel F32 | Intel F64 |
 | ------------------------------ | ----------- | ----------- | --------- | --------- | ----------- | ----------- |
-| CMAPTorsion                    |            |            | -         | -         |            |            |
-| CMAPMotionRemover              |            |            | -         | -         |            |            |
-| CMMotionRemover                |            |            | -         | -         |            |            |
-| Checkpoints                    |            |            | -         | -         |            |            |
-| CompoundIntegrator             |            |            | -         | -         |            |            |
-| CustomAngleForce               |            |            | -         | -         |            |            |
-| CustomBondForce                |            |            | -         | -         |            |            |
-| CustomCVForce                  |            |            | -         | -         |            |            |
-| CustomCentroidBondForce        |            |            | -         | -         |            |            |
-| CustomCompoundBondForce        |            |            | -         | -         |            |            |
-| CustomExternalForce            |            |            | -         | -         |            |            |
-| CustomGBForce                  |            |            | -         | -         |            |            |
-| CustomHbondForce               |            |            | -         | -         |            |            |
-| CustomTorsionForce             |            |            | -         | -         |            |            |
-| DeviceQuery                    |            |            | -         | -         |            |            |
-| DispersionPME                  |            |            | -         | -         |            |            |
-| Ewald                          |            |            | -         | -         |            |            |
-| FFT                            |            |            | -         | -         |            |            |
-| GBSAOBCForce                   |            |            | -         | -         |            |            |
-| GayBerneForce                  |            |            | -         | -         |            |            |
-| HarmonicAngleForce             |            |            | -         | -         |            |            |
-| HarmonicBondForce              |            |            | -         | -         |            |            |
-| MultipleForces                 |            |            | -         | -         |            |            |
-| PeriodicTorsionForce           |            |            | -         | -         |            |            |
-| RBTorsionForce                 |            |            | -         | -         |            |            |
-| RMSDForce                      |            |            | -         | -         |            |            |
-| Random                         |            |            | -         | -         |            |            |
-| Settle                         |            |            | -         | -         |            |            |
-| Sort                           |            |            | -         | -         |            |            |
-| VariableVerlet                 |            |            | -         | -         |            |            |
-| AmoebaExtrapolatedPolarization |            |            | -         | -         |            |            |
-| AmoebaGeneralizedKirkwoodForce |            |            | -         | -         |            |            |
-| AmoebaMultipoleForce           |            |            | -         | -         |            |            |
-| AmoebaTorsionTorsionForce      |            |            | -         | -         |            |            |
-| AmoebaVdwForce                 |            |            | -         | -         |            |            |
-| HippoNonbondedForce            |            |            | -         | -         |            |            |
-| WcaDispersionForce             |            |            | -         | -         |            |            |
-| DrudeForce                     |            |            | -         | -         |            |            |
+| CMAPTorsion                    | ✅           | ❌           | -         | -         |            |            |
+| CMAPMotionRemover              | ✅           | ❌           | -         | -         |            |            |
+| CMMotionRemover                | ✅           | ❌           | -         | -         |            |            |
+| Checkpoints                    | ✅           | ❌           | -         | -         |            |            |
+| CompoundIntegrator             | ✅           | ❌           | -         | -         |            |            |
+| CustomAngleForce               | ✅           | ❌           | -         | -         |            |            |
+| CustomBondForce                | ✅           | ❌           | -         | -         |            |            |
+| CustomCVForce                  | ✅           | ❌           | -         | -         |            |            |
+| CustomCentroidBondForce        | ✅           | ❌           | -         | -         |            |            |
+| CustomCompoundBondForce        | ✅           | ❌           | -         | -         |            |            |
+| CustomExternalForce            | ✅           | ❌           | -         | -         |            |            |
+| CustomGBForce                  | ✅           | ❌           | -         | -         |            |            |
+| CustomHbondForce               | ✅           | ❌           | -         | -         |            |            |
+| CustomTorsionForce             | ✅           | ❌           | -         | -         |            |            |
+| DeviceQuery                    | ✅           | ✅           | -         | -         |            |            |
+| DispersionPME                  | ✅           | ❌           | -         | -         |            |            |
+| Ewald                          | ✅           | ❌           | -         | -         |            |            |
+| FFT                            | ✅           | ❌           | -         | -         |            |            |
+| GBSAOBCForce                   | ✅           | ❌           | -         | -         |            |            |
+| GayBerneForce                  | ✅           | ❌           | -         | -         |            |            |
+| HarmonicAngleForce             | ✅           | ❌           | -         | -         |            |            |
+| HarmonicBondForce              | ✅           | ❌           | -         | -         |            |            |
+| MultipleForces                 | ✅           | ❌           | -         | -         |            |            |
+| PeriodicTorsionForce           | ✅           | ❌           | -         | -         |            |            |
+| RBTorsionForce                 | ✅           | ❌           | -         | -         |            |            |
+| RMSDForce                      | ✅           | ❌           | -         | -         |            |            |
+| Random                         | ✅           | ❌           | -         | -         |            |            |
+| Settle                         | ✅           | ❌           | -         | -         |            |            |
+| Sort                           | ✅           | ❌           | -         | -         |            |            |
+| VariableVerlet                 | ✅           | ❌           | -         | -         |            |            |
+| AmoebaExtrapolatedPolarization | ✅           | ❌           | -         | -         |            |            |
+| AmoebaGeneralizedKirkwoodForce | ✅           | ❌           | -         | -         |            |            |
+| AmoebaMultipoleForce           | ✅           | ❌           | -         | -         |            |            |
+| AmoebaTorsionTorsionForce      | ✅           | ❌           | -         | -         |            |            |
+| AmoebaVdwForce                 | ✅           | ❌           | -         | -         |            |            |
+| HippoNonbondedForce            | ✅           | ❌           | -         | -         |            |            |
+| WcaDispersionForce             | ✅           | ❌           | -         | -         |            |            |
+| DrudeForce                     | ✅           | ❌           | -         | -         |            |            |
 
 Long tests:
 
@@ -132,19 +132,19 @@ Long tests:
 | ------------------- | ----- | --- | ----- |
 | Last tested version | pre-release   | n/a | pre-release   |
 
-| Test                           | Apple (F32) | Apple (F64) | AMD (F32) | AMD (F64) | Intel (F32) | Intel (F64) |
+| Test                           | Apple F32 | Apple F64 | AMD F32 | AMD F64 | Intel F32 | Intel F64 |
 | ------------------------------ | ----------- | ----------- | --------- | --------- | ----------- | ----------- |
-| AndersenThermostat             |            |            | -         | -         |            |            |
-| CustomManyParticleForce        |            |            | -         | -         |            |            |
-| CustomNonbondedForce           |            |            | -         | -         |            |            |
-| LangevinIntegrator             |            |            | -         | -         |            |            |
-| LangevinMiddleIntegrator       |            |            | -         | -         |            |            |
-| LocalEnergyMinimizer           |            |            | -         | -         |            |            |
-| MonteCarloFlexibleBarostat     |            |            | -         | -         |            |            |
-| NonbondedForce                 |            |            | -         | -         |            |            |
-| VerletIntegrator               |            |            | -         | -         |            |            |
-| VirtualSites                   |            |            | -         | -         |            |            |
-| DrudeNoseHoover                |            |            | -         | -         |            |            |
+| AndersenThermostat             | ✅           | ❌           | -         | -         |            |            |
+| CustomManyParticleForce        | ✅           | ❌           | -         | -         |            |            |
+| CustomNonbondedForce           | ✅           | ❌           | -         | -         |            |            |
+| LangevinIntegrator             | ✅           | ❌           | -         | -         |            |            |
+| LangevinMiddleIntegrator       | ✅           | ❌           | -         | -         |            |            |
+| LocalEnergyMinimizer           | ✅           | ❌           | -         | -         |            |            |
+| MonteCarloFlexibleBarostat     | ✅           | ❌           | -         | -         |            |            |
+| NonbondedForce                 | ✅           | ❌           | -         | -         |            |            |
+| VerletIntegrator               | ✅           | ❌           | -         | -         |            |            |
+| VirtualSites                   | ✅           | ❌           | -         | -         |            |            |
+| DrudeNoseHoover                | ✅           | ❌           | -         | -         |            |            |
 
 Very long tests:
 
@@ -153,17 +153,17 @@ Very long tests:
 | Last tested version | pre-release   | n/a | n/a   |
 
 
-| Test                           | Apple (F32) | Apple (F64) | AMD (F32) | AMD (F64) | Intel (F32) | Intel (F64) |
+| Test                           | Apple F32 | Apple F64 | AMD F32 | AMD F64 | Intel F32 | Intel F64 |
 | ------------------------------ | ----------- | ----------- | --------- | --------- | ----------- | ----------- |
-| BrownianIntegrator             |            |            | -         | -         | -           | -           |
-| CustomIntegrator               |            |            | -         | -         | -           | -           |
-| MonteCarloAnisotropicBarostat  |            |            | -         | -         | -           | -           |
-| MonteCarloBarostat             |            |            | -         | -         | -           | -           |
-| NoseHooverIntegrator           |            |            | -         | -         | -           | -           |
-| VariableLangevinIntegrator     |            |            | -         | -         | -           | -           |
-| RpmdParaHydrogen               |            |            | -         | -         | -           | -           |
-| DrudeLangevinIntegrator        |            |            | -         | -         | -           | -           |
-| DrudeSCFIntegrator             |            |            | -         | -         | -           | -           |
+| BrownianIntegrator             | ✅           | ❌           | -         | -         | -           | -           |
+| CustomIntegrator               | ✅           | ❌           | -         | -         | -           | -           |
+| MonteCarloAnisotropicBarostat  | ✅           | ❌           | -         | -         | -           | -           |
+| MonteCarloBarostat             | ✅           | ❌           | -         | -         | -           | -           |
+| NoseHooverIntegrator           | ✅           | ❌           | -         | -         | -           | -           |
+| VariableLangevinIntegrator     | ✅           | ❌           | -         | -         | -           | -           |
+| RpmdParaHydrogen               | ✅           | ❌           | -         | -         | -           | -           |
+| DrudeLangevinIntegrator        | ✅           | ❌           | -         | -         | -           | -           |
+| DrudeSCFIntegrator             | ✅           | ❌           | -         | -         | -           | -           |
 
 ## License
 
