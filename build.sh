@@ -72,7 +72,7 @@ if [[ $# != 0 ]]; then
   fi
   
   if [[ $invalid_input == true ]]; then
-    echo "Usage: build.sh [--install-] [--all-tests] [--most-tests] [--quick-tests]"
+    echo "Usage: build.sh [--install] [--all-tests] [--most-tests] [--quick-tests]"
     exit -1
   fi
 fi
