@@ -6,7 +6,7 @@
 
 -->
 
-This plugin adds the Metal platform that accelerates [OpenMM](https://openmm.org) on Metal 3 GPUs. It supports Apple, AMD, and Intel GPUs running macOS 13\* or higher. <i>It may eventually support iOS 16 for [usage in AR](https://github.com/philipturner/arheadsetkit-dev)</i>. The current implementation uses Apple's OpenCL compatiblity layer (`cl2Metal`) to translate OpenCL kernels to AIR. Its current focus is implementing patches for OpenMM's code base that improve performance on macOS. It distributes the patches in a way easily accessible to most users, who would otherwise wait for them to be upstreamed. As a beta version of the patches, this may cause unexpected bugs or performance regressions.
+This plugin adds the Metal platform that accelerates [OpenMM](https://openmm.org) on Metal 3 GPUs. It supports Apple, AMD, and Intel GPUs running macOS 13\* or higher. <i>It may eventually support iOS 16 for [usage in AR](https://github.com/philipturner/arheadsetkit-dev)</i>. The current implementation uses Apple's OpenCL compatiblity layer (`cl2Metal`) to translate OpenCL kernels to AIR. Its current focus is implementing patches for OpenMM's code base that improve performance on macOS. It distributes the patches in a way easily accessible to most users, who would otherwise wait for them to be upstreamed. It also adds optimizations for Intel Macs that cannot be upstreamed into the main code base, for various reasons.
 
 <!--
 > \* The current version supports macOS Monterey. Ventura will only be required after the transition to Metal.
@@ -72,7 +72,7 @@ TODO: For user convenience, attach pre-compiled binaries and `install.sh` to the
 
 ## Performance
 
-Expect a 100-250% speedup depending on your workload.
+Expect a 2-4x speedup depending on your workload.
 
 ## License
 
