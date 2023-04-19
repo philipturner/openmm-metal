@@ -142,7 +142,7 @@ Long tests:
 | LangevinMiddleIntegrator       | ✅           | ❌           | -         | -         | ✅           | ❌           |
 | LocalEnergyMinimizer           | ✅           | ❌           | -         | -         | ✅           | ❌           |
 | MonteCarloFlexibleBarostat     | ✅           | ❌           | -         | -         | ✅           | ❌           |
-| NonbondedForce                 | ✅           | ❌           | -         | -         | ✅           | ✅           |
+| NonbondedForce                 | ✅           | ❌           | -         | -         | ❌           | ❌           |
 | VerletIntegrator               | ✅           | ❌           | -         | -         | ✅           | ❌           |
 | VirtualSites                   | ✅           | ❌           | -         | -         | ✅           | ❌           |
 | DrudeNoseHoover                | ✅           | ❌           | -         | -         | ✅           | ❌           |
