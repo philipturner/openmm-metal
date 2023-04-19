@@ -71,15 +71,52 @@ Legend:
 - Mixed precision emulation is planned for Apple silicon, but currently not a priority.
 - Double precision is not tested or officially supported.
 
+
+<!--
+
+For reference: ✅
+For reference: ❌
+
+-->
+
 Quick tests:
 
 |                     | Apple | AMD | Intel |
 | ------------------- | ----- | --- | ----- |
-| Last tested version | n/a   | n/a | n/a   |
+| Last tested version | pre-release   | n/a | pre-release   |
 
 | Test                           | Apple (F32) | Apple (F64) | AMD (F32) | AMD (F64) | Intel (F32) | Intel (F64) |
 | ------------------------------ | ----------- | ----------- | --------- | --------- | ----------- | ----------- |
-|                                |             |             | -         | -         |             |             |
+| CMAPTorsion                    |            |            | -         | -         |            |            |
+| CMAPMotionRemover              |            |            | -         | -         |            |            |
+| CMMotionRemover                |            |            | -         | -         |            |            |
+| Checkpoints                    |            |            | -         | -         |            |            |
+| CompoundIntegrator             |            |            | -         | -         |            |            |
+| CustomAngleForce               |            |            | -         | -         |            |            |
+| CustomBondForce                |            |            | -         | -         |            |            |
+| CustomCVForce                  |            |            | -         | -         |            |            |
+| CustomCentroidBondForce        |            |            | -         | -         |            |            |
+| CustomCompoundBondForce        |            |            | -         | -         |            |            |
+| CustomExternalForce            |            |            | -         | -         |            |            |
+| CustomGBForce                  |            |            | -         | -         |            |            |
+| CustomHbondForce               |            |            | -         | -         |            |            |
+| CustomTorsionForce             |            |            | -         | -         |            |            |
+| DeviceQuery                    |            |            | -         | -         |            |            |
+| DispersionPME                  |            |            | -         | -         |            |            |
+| Ewald                          |            |            | -         | -         |            |            |
+| FFT                            |            |            | -         | -         |            |            |
+| GBSAOBCForce                   |            |            | -         | -         |            |            |
+| GayBerneForce                  |            |            | -         | -         |            |            |
+| HarmonicAngleForce             |            |            | -         | -         |            |            |
+| HarmonicBondForce              |            |            | -         | -         |            |            |
+| MultipleForces                 |            |            | -         | -         |            |            |
+| PeriodicTorsionForce           |            |            | -         | -         |            |            |
+| RBTorsionForce                 |            |            | -         | -         |            |            |
+| RMSDForce                      |            |            | -         | -         |            |            |
+| Random                         |            |            | -         | -         |            |            |
+| Settle                         |            |            | -         | -         |            |            |
+| Sort                           |            |            | -         | -         |            |            |
+| VariableVerlet                 |            |            | -         | -         |            |            |
 
 Long tests:
 
@@ -89,7 +126,7 @@ Long tests:
 
 | Test                           | Apple (F32) | Apple (F64) | AMD (F32) | AMD (F64) | Intel (F32) | Intel (F64) |
 | ------------------------------ | ----------- | ----------- | --------- | --------- | ----------- | ----------- |
-|                                |             |             | -         | -         |             |             |
+|                                |            |            | -         | -         |            |            |
 
 Very long tests:
 
@@ -100,7 +137,7 @@ Very long tests:
 
 | Test                           | Apple (F32) | Apple (F64) | AMD (F32) | AMD (F64) | Intel (F32) | Intel (F64) |
 | ------------------------------ | ----------- | ----------- | --------- | --------- | ----------- | ----------- |
-|                                |             |             | -         | -         |             |             |
+|                                |            |            | -         | -         |            |            |
 
 ## License
 
