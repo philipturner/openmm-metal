@@ -12,7 +12,7 @@ Another goal is to support machine learning potentials, similar to [openmm-torch
 
 ## Performance
 
-Expect a 2-4x speedup depending on your workload.
+Expect a 2-4x speedup for large simulations.
 
 ## Usage
 
