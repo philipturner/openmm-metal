@@ -23,13 +23,9 @@ conda install -c conda-forge openmm
 git clone https://github.com/openmm/openmm
 git clone https://github.com/philipturner/openmm-metal
 cd openmm-metal
-bash build.sh
-PLUGINS_DIR=/usr/local/openmm/lib/plugins
 
 # requires password
-sudo mkdir -p $PLUGINS_DIR
-libs=(libOpenMMMetal libOpenMMAmoebaMetal libOpenMMDrudeMetal libOpenMMRPMDMetal)
-for lib in $libs; do sudo cp ".build/${lib}.dylib" "$PLUGINS_DIR/${lib}.dylib"; done
+bash build.sh --install --quick-tests
 ```
 
 Next, you will benchmark OpenCL against Metal. In your originally empty folder, enter `openmm/examples`. Arrange the files by name and locate `benchmark.py`. Then, open the file with TextEdit or Xcode. Modify the top of the script as shown below:
