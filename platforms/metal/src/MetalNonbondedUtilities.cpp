@@ -406,7 +406,7 @@ void MetalNonbondedUtilities::computeInteractions(int forceGroups, bool includeF
         context.executeKernel(kernel, numForceThreadBlocks*forceThreadBlockSize, forceThreadBlockSize);
     }
     if (useCutoff && numTiles > 0) {
-        // The flush here only affects Apple's cl2metal driver
+        // The flush here only affects Apple's cl2Metal driver
         #if defined(__aarch64__)
         if (kernels.hasForces)
             context.getQueue().flush();
