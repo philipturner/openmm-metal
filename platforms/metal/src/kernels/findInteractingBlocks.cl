@@ -54,12 +54,13 @@ __kernel void findBlockBounds(int numAtoms, real4 periodicBoxSize, real4 invPeri
  */
 __kernel void sortBoxData(__global const real2* restrict sortedBlock, __global const real4* restrict blockCenter,
         __global const real3* restrict blockBoundingBox, __global real4* restrict sortedBlockCenter,
-        __global real3* restrict sortedBlockBoundingBox, __global const real3* restrict posq, __global const real3* restrict oldPositions,
+        __global half* restrict sortedBlockBoundingBox, __global const real3* restrict posq, __global const real3* restrict oldPositions,
         __global unsigned int* restrict interactionCount, __global int* restrict rebuildNeighborList, int forceRebuild) {
     for (int i = get_global_id(0); i < NUM_BLOCKS; i += get_global_size(0)) {
         int index = (int) sortedBlock[i].y;
         sortedBlockCenter[i] = blockCenter[index];
-        sortedBlockBoundingBox[i] = blockBoundingBox[index];
+//        sortedBlockBoundingBox[i] = blockBoundingBox[index];
+        vstorea_half3_rtp(float3(blockBoundingBox[index]), i, sortedBlockBoundingBox);
     }
     
     // Also check whether any atom has moved enough so that we really need to rebuild the neighbor list.
@@ -83,7 +84,7 @@ __kernel void sortBoxData(__global const real2* restrict sortedBlock, __global c
 __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodicBoxSize, real4 periodicBoxVecX, real4 periodicBoxVecY, real4 periodicBoxVecZ,
         __global unsigned int* restrict interactionCount, __global int* restrict interactingTiles, __global unsigned int* restrict interactingAtoms,
         __global const real3* restrict posq, unsigned int maxTiles, unsigned int startBlockIndex, unsigned int numBlocks, __global real2* restrict sortedBlocks,
-        __global const real4* restrict sortedBlockCenter, __global const real3* restrict sortedBlockBoundingBox,
+        __global const real4* restrict sortedBlockCenter, __global const half* restrict sortedBlockBoundingBox,
         __global const unsigned int* restrict exclusionIndices, __global const unsigned int* restrict exclusionRowIndices, __global real3* restrict oldPositions,
         __global const int* restrict rebuildNeighborList) {
 
@@ -115,7 +116,8 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
         real2 sortedKey = sortedBlocks[block1];
         int x = (int) sortedKey.y;
         real4 blockCenterX = sortedBlockCenter[block1];
-        real3 blockSizeX = sortedBlockBoundingBox[block1];
+//        real3 blockSizeX = sortedBlockBoundingBox[block1];
+        real3 blockSizeX = real3(vloada_half3(block1, sortedBlockBoundingBox));
         int neighborsInBuffer = 0;
         real3 pos1 = posq[x*TILE_SIZE+indexInWarp].xyz;
 #ifdef USE_PERIODIC
@@ -154,7 +156,8 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
 #endif
             if (includeBlock2) {
                 real4 blockCenterY = sortedBlockCenter[block2];
-                real3 blockSizeY = sortedBlockBoundingBox[block2];
+//                real3 blockSizeY = sortedBlockBoundingBox[block2];
+                real3 blockSizeY = real3(vloada_half3(block2, sortedBlockBoundingBox));
                 real4 blockDelta = blockCenterX-blockCenterY;
 #ifdef USE_PERIODIC
                 APPLY_PERIODIC_TO_DELTA(blockDelta)
