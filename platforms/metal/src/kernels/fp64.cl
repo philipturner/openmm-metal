@@ -107,7 +107,7 @@ DS DS_negated(DS input) {
 }
 
 DS DS_halved(DS input) {
-  return DS_init(input.hi / 2, -input.lo / 2);
+  return DS_init(input.hi / 2, input.lo / 2);
 }
 
 DS DS_normalized(DS input) {
