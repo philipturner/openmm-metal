@@ -1,10 +1,8 @@
 # OpenMM Metal Plugin
 
-This plugin adds the Metal platform that accelerates [OpenMM](https://openmm.org) on Metal 3 GPUs. It supports Apple, AMD, and Intel GPUs running macOS Ventura or higher. The current implementation uses Apple's OpenCL compatiblity layer (`cl2Metal`) to translate OpenCL kernels to AIR. Its current focus is implementing patches for OpenMM's code base that improve performance on macOS. It distributes the patches in a way easily accessible to most users, who would otherwise wait for them to be upstreamed. It also adds optimizations for Intel Macs that cannot be upstreamed into the main code base, for various reasons.
+This plugin adds the Metal platform that accelerates [OpenMM](https://openmm.org) on Metal 3 GPUs. It supports Apple, AMD, and Intel GPUs running macOS Ventura or higher. The current implementation uses Apple's OpenCL compatiblity layer (`cl2Metal`) to translate OpenCL kernels to AIR. It focuses on patches for OpenMM's code base that improve performance on macOS. The plugin makes the patches easily accessible to most users, who would otherwise wait for them to be upstreamed. It also adds optimizations for Intel Macs that cannot be upstreamed into the main code base, for various reasons.
 
-The Metal plugin may transition kernels directly to the Metal API. This would provide greater control over the CPU-side command encoding process. It could solve a long-standing latency bottleneck for very small systems, but removes mixed and double precision on Intel Macs. <b>FP64 emulation is proven to work on Apple silicon and is not a priority for molecular dynamics.</b> A backward-compatible OpenCL compilation path may or may not be maintained.
-
-> \* The current version supports macOS Monterey. Ventura will be required after a potential transition to Metal.
+The Metal plugin may transition to using the Metal API directly. This would provide greater control over the CPU-side command encoding process, solving a long-standing latency bottleneck for 1000-atom systems. However, it removes mixed and double precision on Intel Macs. <b>FP64 emulation is proven to work on Apple silicon, but is not a priority for molecular dynamics.</b> A backward-compatible OpenCL compilation path may or may not be maintained.
 
 ## Performance
 
