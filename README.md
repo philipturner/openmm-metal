@@ -2,13 +2,9 @@
 
 This plugin adds the Metal platform that accelerates [OpenMM](https://openmm.org) on Metal 3 GPUs. It supports Apple, AMD, and Intel GPUs running macOS Ventura or higher. The current implementation uses Apple's OpenCL compatiblity layer (`cl2Metal`) to translate OpenCL kernels to AIR. Its current focus is implementing patches for OpenMM's code base that improve performance on macOS. It distributes the patches in a way easily accessible to most users, who would otherwise wait for them to be upstreamed. It also adds optimizations for Intel Macs that cannot be upstreamed into the main code base, for various reasons.
 
-<!--
-> \* The current version supports macOS Monterey. Ventura will only be required after the transition to Metal.
+The Metal plugin may transition kernels directly to the Metal API. This would provide greater control over the CPU-side command encoding process. It could solve a long-standing latency bottleneck for very small systems, but removes mixed and double precision on Intel Macs. <b>FP64 emulation is proven to work on Apple silicon and is not a priority for molecular dynamics.</b> A backward-compatible OpenCL compilation path may or may not be maintained.
 
-The Metal plugin will eventually transition kernels directly to the Metal API. Doing so enables optimizations like SIMD-group reductions and indirect command buffers, but removes double precision support on AMD GPUs. Before the transition, `double` and/or `mixed` precision will be deactivated. The plugin will eventually use [double-single FP64 emulation](https://andrewthall.org/papers/df64_qf128.pdf) to bring back `mixed`, this time supporting all GPUs.
-
-Another goal is to support machine learning potentials, similar to [openmm-torch](https://github.com/openmm/openmm-torch). This repository should provide a more direct pathway to [MPSGraph](https://developer.apple.com/documentation/metalperformanceshadersgraph), the high-level MLIR compiler harnessed by tensorflow-metal and PyTorch. The plugin should create API (e.g. `MPSGraphForce`) for extracting the `MTLBuffer` backing an OpenMM class. The API should also facilitate construction of `MPSGraphTensor` and `MPSGraphTensorData` instances from the buffer. The ML potential (written in C++) should be made accessible from Swift - the language for using MPSGraph. Swift code will access all other OpenMM APIs through [PythonKit](https://github.com/pvieito/PythonKit).
--->
+> \* The current version supports macOS Monterey. Ventura will be required after a potential transition to Metal.
 
 ## Performance
 
@@ -61,14 +57,6 @@ OpenMM's current energy minimizer hard-codes checks for the `CUDA`, `OpenCL`, an
 
 ## Testing
 
-Legend:
-- F32 = single precision
-- F64 = mixed precision
-- Mixed precision emulation is planned for Apple silicon, but currently not a priority.
-- Double precision is not tested or officially supported.
-- On Intel, the GPU often has the same FLOPS as the CPU. For functionality failing on the Intel GPU, there is little downside to using the CPU instead.
-
-
 <!--
 
 For reference: ✅
@@ -80,98 +68,95 @@ Quick tests:
 
 |                     | Apple | AMD | Intel |
 | ------------------- | ----- | --- | ----- |
-| Last tested version | 1.0.0   | 1.0.0 | 1.0.0   |
+| Last tested version | 1.1.0-dev | 1.0.0 | 1.0.0  |
 
-| Test                           | Apple F32 | Apple F64 | AMD F32 | AMD F64 | Intel F32 | Intel F64 |
-| ------------------------------ | ----------- | ----------- | --------- | --------- | ----------- | ----------- |
-| CMAPTorsion                    | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| CMAPMotionRemover              | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| CMMotionRemover                | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| Checkpoints                    | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| CompoundIntegrator             | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| CustomAngleForce               | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| CustomBondForce                | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| CustomCVForce                  | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| CustomCentroidBondForce        | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| CustomCompoundBondForce        | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| CustomExternalForce            | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| CustomGBForce                  | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| CustomHbondForce               | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| CustomTorsionForce             | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| DeviceQuery                    | ✅           | ✅           | ✅         | ✅         | ✅           | ✅           |
-| DispersionPME                  | ✅           | ❌           | ✅         | ✅         | ❌           | ❌           |
-| Ewald                          | ✅           | ❌           | ✅         | ✅         | ❌           | ❌           |
-| FFT                            | ✅           | ❌           | ✅         | ✅         | ❌           | ❌           |
-| GBSAOBCForce                   | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| GayBerneForce                  | ✅           | ❌           | ✅         | ✅         | ❌           | ❌           |
-| HarmonicAngleForce             | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| HarmonicBondForce              | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| MultipleForces                 | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| PeriodicTorsionForce           | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| RBTorsionForce                 | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| RMSDForce                      | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| Random                         | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| Settle                         | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| Sort                           | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| VariableVerlet                 | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| AmoebaExtrapolatedPolarization | ✅           | ❌           | ✅         | ✅         | ❌           | ❌           |
-| AmoebaGeneralizedKirkwoodForce | ✅           | ❌           | ✅         | ✅         | ❌           | ❌           |
-| AmoebaMultipoleForce           | ✅           | ❌           | ✅         | ✅         | ❌           | ❌           |
-| AmoebaTorsionTorsionForce      | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| AmoebaVdwForce                 | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| HippoNonbondedForce            | ✅           | ❌           | ✅         | ✅         | ❌           | ❌           |
-| WcaDispersionForce             | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| DrudeForce                     | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
+| Test                           | Apple FP32 | AMD FP32 | Intel FP32 | 
+| ------------------------------ | ----------- | --------- | --------- | 
+| CMAPTorsion                    | ✅           | ✅         | ✅         |
+| CMAPMotionRemover              | ✅           | ✅         | ✅         |
+| CMMotionRemover                | ✅           | ✅         | ✅         |
+| Checkpoints                    | ✅           | ✅         | ✅         |
+| CompoundIntegrator             | ✅           | ✅         | ✅         |
+| CustomAngleForce               | ✅           | ✅         | ✅         |
+| CustomBondForce                | ✅           | ✅         | ✅         |
+| CustomCVForce                  | ✅           | ✅         | ✅         |
+| CustomCentroidBondForce        | ✅           | ✅         | ✅         |
+| CustomCompoundBondForce        | ✅           | ✅         | ✅         |
+| CustomExternalForce            | ✅           | ✅         | ✅         |
+| CustomGBForce                  | ✅           | ✅         | ✅         |
+| CustomHbondForce               | ✅           | ✅         | ✅         |
+| CustomTorsionForce             | ✅           | ✅         | ✅         |
+| DeviceQuery                    | ✅           | ✅         | ✅         |
+| DispersionPME                  | ✅           | ✅         | ❌         |
+| Ewald                          | ✅           | ✅         | ❌         |
+| FFT                            | ✅           | ✅         | ❌         |
+| GBSAOBCForce                   | ✅           | ✅         | ✅         |
+| GayBerneForce                  | ✅           | ✅         | ❌         |
+| HarmonicAngleForce             | ✅           | ✅         | ✅         |
+| HarmonicBondForce              | ✅           | ✅         | ✅         |
+| MultipleForces                 | ✅           | ✅         | ✅         |
+| PeriodicTorsionForce           | ✅           | ✅         | ✅         |
+| RBTorsionForce                 | ✅           | ✅         | ✅         |
+| RMSDForce                      | ✅           | ✅         | ✅         |
+| Random                         | ✅           | ✅         | ✅         |
+| Settle                         | ✅           | ✅         | ✅         |
+| Sort                           | ✅           | ✅         | ✅         |
+| VariableVerlet                 | ✅           | ✅         | ✅         |
+| AmoebaExtrapolatedPolarization | ✅           | ✅         | ❌         |
+| AmoebaGeneralizedKirkwoodForce | ✅           | ✅         | ❌         |
+| AmoebaMultipoleForce           | ✅           | ✅         | ❌         |
+| AmoebaTorsionTorsionForce      | ✅           | ✅         | ✅         |
+| HippoNonbondedForce            | ✅           | ✅         | ❌         |
+| WcaDispersionForce             | ✅           | ✅         | ✅         |
+| DrudeForce                     | ✅           | ✅         | ✅         |
 
 Long tests:
 
 |                     | Apple | AMD | Intel |
 | ------------------- | ----- | --- | ----- |
-| Last tested version | 1.0.0   | 1.0.0 | 1.0.0  |
+| Last tested version | 1.1.0-dev | 1.0.0 | 1.0.0  |
 
-| Test                           | Apple F32 | Apple F64 | AMD F32 | AMD F64 | Intel F32 | Intel F64 |
-| ------------------------------ | ----------- | ----------- | --------- | --------- | ----------- | ----------- |
-| AndersenThermostat             | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| CustomManyParticleForce        | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| CustomNonbondedForce           | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| LangevinIntegrator             | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| LangevinMiddleIntegrator       | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| LocalEnergyMinimizer           | ✅           | ❌           | ❌         | ❌         | ✅           | ❌           |
-| MonteCarloFlexibleBarostat     | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| NonbondedForce                 | ✅           | ❌           | ✅         | ✅         | ❌           | ❌           |
-| VerletIntegrator               | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| VirtualSites                   | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
-| DrudeNoseHoover                | ✅           | ❌           | ✅         | ✅         | ✅           | ❌           |
+| Test                           | Apple FP32 | AMD FP32 | Intel FP32 | 
+| ------------------------------ | ----------- | --------- | --------- | 
+| AndersenThermostat             | ✅           | ✅         | ✅         |
+| CustomManyParticleForce        | ✅           | ✅         | ✅         |
+| CustomNonbondedForce           | ✅           | ✅         | ✅         |
+| LangevinIntegrator             | ✅           | ✅         | ✅         |
+| LangevinMiddleIntegrator       | ✅           | ✅         | ✅         |
+| LocalEnergyMinimizer           | ✅           | ❌         | ✅         |
+| MonteCarloFlexibleBarostat     | ✅           | ✅         | ✅         |
+| NonbondedForce                 | ✅           | ✅         | ❌         |
+| VerletIntegrator               | ✅           | ✅         | ✅         |
+| VirtualSites                   | ✅           | ✅         | ✅         |
+| DrudeNoseHoover                | ✅           | ✅         | ✅         |
 
 Very long tests:
 
 |                     | Apple | AMD | Intel |
 | ------------------- | ----- | --- | ----- |
-| Last tested version | 1.0.0   | n/a | n/a   |
+| Last tested version | 1.1.0-dev | n/a | n/a   |
 
-
-| Test                           | Apple F32 | Apple F64 | AMD F32 | AMD F64 | Intel F32 | Intel F64 |
-| ------------------------------ | ----------- | ----------- | --------- | --------- | ----------- | ----------- |
-| BrownianIntegrator             | ✅           | ❌           | -         | -         | -           | -           |
-| CustomIntegrator               | ✅           | ❌           | -         | -         | -           | -           |
-| MonteCarloAnisotropicBarostat  | ✅           | ❌           | -         | -         | -           | -           |
-| MonteCarloBarostat             | ✅           | ❌           | -         | -         | -           | -           |
-| NoseHooverIntegrator           | ✅           | ❌           | -         | -         | -           | -           |
-| VariableLangevinIntegrator     | ✅           | ❌           | -         | -         | -           | -           |
-| RpmdParaHydrogen               | ✅           | ❌           | -         | -         | -           | -           |
-| DrudeLangevinIntegrator        | ✅           | ❌           | -         | -         | -           | -           |
-| DrudeSCFIntegrator             | ✅           | ❌           | -         | -         | -           | -           |
+| Test                           | Apple FP32 | AMD FP32 | Intel FP32 | 
+| ------------------------------ | ----------- | --------- | --------- | 
+| BrownianIntegrator             | ✅           | -         | -         |
+| CustomIntegrator               | ✅           | -         | -         |
+| MonteCarloAnisotropicBarostat  | ✅           | -         | -         |
+| MonteCarloBarostat             | ✅           | -         | -         |
+| NoseHooverIntegrator           | ✅           | -         | -         |
+| VariableLangevinIntegrator     | ✅           | -         | -         |
+| DrudeLangevinIntegrator        | ✅           | -         | -         |
+| DrudeSCFIntegrator             | ✅           | -         | -         |
 
 ## License
 
-The Metal Platform uses OpenMM API under the terms of the MIT License.  A copy of this license may
+The Metal Platform uses OpenMM API under the terms of the MIT License. A copy of this license may
 be found in the accompanying file [MIT.txt](licenses/MIT.txt).
 
 The Metal Platform is based on the OpenCL Platform of OpenMM under the terms of the GNU Lesser General
-Public License.  A copy of this license may be found in the accompanying file
-[LGPL.txt](licenses/LGPL.txt).  It in turn incorporates the terms of the GNU General Public
+Public License. A copy of this license may be found in the accompanying file
+[LGPL.txt](licenses/LGPL.txt). It in turn incorporates the terms of the GNU General Public
 License, which may be found in the accompanying file [GPL.txt](licenses/GPL.txt).
 
 The Metal Platform uses [VkFFT](https://github.com/DTolm/VkFFT) by Dmitrii Tolmachev under the terms
-of the MIT License.  A copy of this license may be found in the accompanying file
+of the MIT License. A copy of this license may be found in the accompanying file
 [MIT-VkFFT.txt](licenses/MIT-VkFFT.txt).

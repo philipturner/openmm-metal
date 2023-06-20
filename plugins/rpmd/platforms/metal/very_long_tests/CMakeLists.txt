@@ -18,8 +18,13 @@ FOREACH(TEST_PROG ${TEST_PROGS})
     SET_TARGET_PROPERTIES(${TEST_ROOT} PROPERTIES LINK_FLAGS "${EXTRA_LINK_FLAGS}" COMPILE_FLAGS "${EXTRA_COMPILE_FLAGS}")
     
     # RPMD tests take way too long.
-    ADD_TEST(${TEST_ROOT}Single ${EXECUTABLE_OUTPUT_PATH}/${TEST_ROOT} single ${OPENCL_TEST_PLATFORM_INDEX} ${OPENCL_TEST_DEVICE_INDEX})
-    ADD_TEST(${TEST_ROOT}Mixed ${EXECUTABLE_OUTPUT_PATH}/${TEST_ROOT} mixed ${OPENCL_TEST_PLATFORM_INDEX} ${OPENCL_TEST_DEVICE_INDEX})
+    #
+    # This is causing problems; becoming part of the quick tests when I don't
+    # want that. I don't have much use for RPMD right now, and this is
+    # excessively long even for a "very long test". I will not be maintaining
+    # support for this.
+    # ADD_TEST(${TEST_ROOT}Single ${EXECUTABLE_OUTPUT_PATH}/${TEST_ROOT} single ${OPENCL_TEST_PLATFORM_INDEX} ${OPENCL_TEST_DEVICE_INDEX})
+
 
 ENDFOREACH(TEST_PROG ${TEST_PROGS})
 
