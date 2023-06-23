@@ -34,8 +34,8 @@ namespace OpenMM {
 
 /**
  * This class is a central holding place for the source code of Metal kernels.
- * The CMake build script inserts declarations into it based on the .cl files in the
- * kernels subfolder.
+ * The CMake build script inserts declarations into it based on the .metal files
+ * in the kernels subfolder.
  */
 
 class OPENMM_EXPORT_COMMON MetalKernelSources {

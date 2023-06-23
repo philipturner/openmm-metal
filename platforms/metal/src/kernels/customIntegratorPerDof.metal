@@ -47,9 +47,6 @@ inline DEVICE void storePos(GLOBAL real4* RESTRICT posq, GLOBAL real4* RESTRICT 
 #endif
 }
 
-// TODO: Investigate why this is always FP64 even in `single` mode, perhaps
-// always use double-single on Apple platforms. This would require prepending
-// the "fp64.cl" header to the current OpenCL file.
 KERNEL void computePerDof(GLOBAL real4* RESTRICT posq, GLOBAL real4* RESTRICT posqCorrection, GLOBAL mixed4* RESTRICT posDelta,
         GLOBAL mixed4* RESTRICT velm, GLOBAL const mm_long* RESTRICT force, GLOBAL const mixed2* RESTRICT dt, GLOBAL const mixed* RESTRICT globals,
         GLOBAL mixed* RESTRICT sum, GLOBAL const float4* RESTRICT gaussianValues, unsigned int gaussianBaseIndex, GLOBAL const float4* RESTRICT uniformValues,
