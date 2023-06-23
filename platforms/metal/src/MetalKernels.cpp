@@ -976,7 +976,7 @@ void MetalCalcNonbondedForceKernel::initialize(const System& system, const Nonbo
     }
     source = cl.replaceStrings(source, replacements);
     if (force.getIncludeDirectSpace())
-        cl.getNonbondedUtilities().addInteraction(useCutoff, usePeriodic, true, force.getCutoffDistance(), exclusionList, source, force.getForceGroup());
+        cl.getNonbondedUtilities().addInteraction(useCutoff, usePeriodic, true, force.getCutoffDistance(), exclusionList, source, force.getForceGroup(), numParticles > 3000);
 
     // Initialize the exceptions.
 
