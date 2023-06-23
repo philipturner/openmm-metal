@@ -57,7 +57,7 @@ KERNEL void computeInteraction(
         , GLOBAL int* RESTRICT exclusions, GLOBAL int* RESTRICT exclusionStartIndex
 #endif
         PARAMETER_ARGUMENTS) {
-    DECLARE_ENERGY
+    mixed energy = 0;
     
     // Loop over particles to be the first one in the set.
     
@@ -103,7 +103,7 @@ KERNEL void computeInteraction(
             }
         }
     }
-    STORE_ENERGY
+    energyBuffer[GLOBAL_ID] += energy;
 }
 
 /**

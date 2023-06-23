@@ -330,12 +330,7 @@ DEVICE void computeOneInteraction(AtomData* data1, AtomData* data2, real sigma, 
         *(j == 0 ? torque1 : torque2) -= torque;
     }
     
-#ifdef USE_DOUBLE_SINGLE
-    // TODO: Investigate whether I need to expand FP32xFP32=FP64 before accumulating.
-    *totalEnergy = DS_add_float_rhs(*totalEnergy, switchValue*energy);
-#else
     *totalEnergy += switchValue*energy;
-#endif
 }
 
 /**
@@ -354,7 +349,7 @@ KERNEL void computeForce(
 #endif
         ) {
     const unsigned int warp = GLOBAL_ID/TILE_SIZE;
-    DECLARE_ENERGY
+    mixed energy = 0;
 #ifdef USE_CUTOFF
     const int numBlocks = *neighborBlockCount;
     if (numBlocks > maxNeighborBlocks)
@@ -488,7 +483,7 @@ KERNEL void computeForce(
         }
 #endif
     }
-    STORE_ENERGY
+    energyBuffer[GLOBAL_ID] += energy;
 }
 
 /**

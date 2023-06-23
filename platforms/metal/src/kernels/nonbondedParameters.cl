@@ -9,7 +9,7 @@ KERNEL void computeParameters(GLOBAL mixed* RESTRICT energyBuffer, int includeSe
         GLOBAL float4* RESTRICT exceptionParamOffsets, GLOBAL int* RESTRICT exceptionOffsetIndices
 #endif
         ) {
-    DECLARE_ENERGY
+    mixed energy = 0;
 
     // Compute particle parameters.
     
@@ -61,7 +61,7 @@ KERNEL void computeParameters(GLOBAL mixed* RESTRICT energyBuffer, int includeSe
     }
 #endif
     if (includeSelfEnergy) {
-        STORE_ENERGY
+        energyBuffer[GLOBAL_ID] += energy;
     }
 }
 

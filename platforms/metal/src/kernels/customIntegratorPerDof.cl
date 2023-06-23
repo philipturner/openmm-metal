@@ -56,32 +56,9 @@ KERNEL void computePerDof(GLOBAL real4* RESTRICT posq, GLOBAL real4* RESTRICT po
         const mixed energy, GLOBAL mixed* RESTRICT energyParamDerivs
         PARAMETER_ARGUMENTS) {
     int index = GLOBAL_ID;
-#ifdef USE_DOUBLE_SINGLE
-    DS stepSize_y = dt[0].y;
-    DS3 stepSize = DS3_init(stepSize_y, stepSize_y, stepSize_y);
-    // TODO: Calculate `forceScale` statically.
-    const DS forceScale = DS_recip(0xFFFFFFFF);
-#else
     TempType3 stepSize = make_TempType3(dt[0].y);
     const TempType forceScale = ((TempType) 1)/0xFFFFFFFF;
-#endif
     while (index < NUM_ATOMS) {
-#ifdef USE_DOUBLE_SINGLE
-        DS4 position = DS4_init_split(posq[index], posqCorrection[index]);
-    #ifdef LOAD_POS_AS_DELTA
-        position = DS4_add(position, posDelta[index]);
-    #endif
-        DS4 velocity = velm[index];
-        DS3 f = DS3_init(DS3_mul(forceScale, DS_init_long(force[index])),
-                         DS3_mul(forceScale, DS_init_long(force[index+PADDED_NUM_atoms])),
-                         DS3_mul(forceScale, DS_init_long(force[index+PADDED_NUM_atoms*2])));
-        
-        // Never assume velocities are correctly normalized.
-        velocity.w = DS_normalize(velocity.w);
-        DS _mass_scalar = DS_recip(velocity.w);
-        DS3 mass = DS3_init(_mass_scalar, _mass_scalar, _mass_scalar);
-        if (velocity.w.hi != 0.0) {
-#else
     #ifdef LOAD_POS_AS_DELTA
         TempType4 position = loadPos(posq, posqCorrection, index) + convertToTempType4(posDelta[index]);
     #else
@@ -91,7 +68,6 @@ KERNEL void computePerDof(GLOBAL real4* RESTRICT posq, GLOBAL real4* RESTRICT po
         TempType3 f = make_TempType3(forceScale*force[index], forceScale*force[index+PADDED_NUM_ATOMS], forceScale*force[index+PADDED_NUM_ATOMS*2]);
         TempType3 mass = make_TempType3(RECIP(velocity.w));
         if (velocity.w != 0.0) {
-#endif
             int gaussianIndex = gaussianBaseIndex;
             int uniformIndex = 0;
             COMPUTE_STEP

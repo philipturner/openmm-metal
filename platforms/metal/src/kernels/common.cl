@@ -101,28 +101,6 @@ inline long realToFixedPoint(real x) {
     return (long) (x * 0x100000000);
 }
 
-#ifdef VENDOR_APPLE
-#ifdef USE_MIXED_PRECISION
-#define USE_DOUBLE_SINGLE
-#endif // USE_MIXED_PRECISION
-#endif // VENDOR_APPLE
-
-#ifdef USE_DOUBLE_SINGLE
-#define DECLARE_ENERGY \
-mixed energy = DS_init(0, 0);
-
-#define STORE_ENERGY \
-energyBuffer[GLOBAL_ID] = DS_init(energyBuffer[GLOBAL_ID], energy); \
-
-#else // USE_DOUBLE_SINGLE
-#define DECLARE_ENERGY \
-mixed energy = 0;
-
-#define STORE_ENERGY \
-energyBuffer[GLOBAL_ID] += energy; \
-
-#endif // USE_DOUBLE_SINGLE
-
 
 
 #ifdef VENDOR_APPLE

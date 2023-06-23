@@ -233,7 +233,7 @@ KERNEL void gridEvaluateEnergy(GLOBAL real2* RESTRICT pmeGrid, GLOBAL mixed* RES
     const real recipScaleFactor = RECIP(M_PI)*recipBoxVecX.x*recipBoxVecY.y*recipBoxVecZ.z;
 #endif
 
-    DECLARE_ENERGY
+    mixed energy = 0;
     for (int index = GLOBAL_ID; index < gridSize; index += GLOBAL_SIZE) {
         // real indices
         int kx = index/(GRID_SIZE_Y*(GRID_SIZE_Z));
@@ -274,28 +274,15 @@ KERNEL void gridEvaluateEnergy(GLOBAL real2* RESTRICT pmeGrid, GLOBAL mixed* RES
         if (kx != 0 || ky != 0 || kz != 0)
 #endif
         {
-#ifdef USE_DOUBLE_SINGLE
-            real _temp_energy = eterm*(grid.x*grid.x + grid.y*grid.y);
-            energy = DS_add_float_rhs(energy, _temp_energy);
-#else
             energy += eterm*(grid.x*grid.x + grid.y*grid.y);
-#endif
         }
     }
     
-#ifdef USE_DOUBLE_SINGLE
-    mixed _temp_energy = DS_mul_float_lhs(0.5f, energy);
-    #if defined(USE_PME_STREAM) && !defined(USE_LJPME)
-    _temp_energy = DS_add(energyBuffer[GLOBAL_ID], _temp_energy);
-    #endif
-    energyBuffer[GLOBAL_ID] = _temp_energy;
-#else
     #if defined(USE_PME_STREAM) && !defined(USE_LJPME)
     energyBuffer[GLOBAL_ID] = 0.5f*energy;
     #else
     energyBuffer[GLOBAL_ID] += 0.5f*energy;
     #endif
-#endif
 }
 
 #if defined(USE_HIP) && !defined(AMD_RDNA) && !defined(USE_DOUBLE_PRECISION)
@@ -413,10 +400,6 @@ KERNEL void addForces(GLOBAL const real4* RESTRICT forces, GLOBAL mm_long* RESTR
 
 KERNEL void addEnergy(GLOBAL const mixed* RESTRICT pmeEnergyBuffer, GLOBAL mixed* RESTRICT energyBuffer, int bufferSize) {
     for (int i = GLOBAL_ID; i < bufferSize; i += GLOBAL_SIZE) {
-#ifdef USE_DOUBLE_SINGLE
-        energyBuffer[i] = DS_add(energyBuffer[i], pmeEnergyBuffer[i]);
-#else
         energyBuffer[i] += pmeEnergyBuffer[i];
-#endif
     }
 }

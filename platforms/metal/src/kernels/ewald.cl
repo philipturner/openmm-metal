@@ -14,7 +14,7 @@ KERNEL void calculateEwaldCosSinSums(GLOBAL mixed* RESTRICT energyBuffer, GLOBAL
     real3 reciprocalBoxSize = make_real3(2*M_PI/periodicBoxSize.x, 2*M_PI/periodicBoxSize.y, 2*M_PI/periodicBoxSize.z);
     real reciprocalCoefficient = ONE_4PI_EPS0*4*M_PI/(periodicBoxSize.x*periodicBoxSize.y*periodicBoxSize.z);
     unsigned int index = GLOBAL_ID;
-    DECLARE_ENERGY
+    mixed energy = 0;
     while (index < (KMAX_Y-1)*ksizez+KMAX_Z)
         index += GLOBAL_SIZE;
     while (index < totalK) {
@@ -48,15 +48,10 @@ KERNEL void calculateEwaldCosSinSums(GLOBAL mixed* RESTRICT energyBuffer, GLOBAL
 
         real k2 = kx*kx + ky*ky + kz*kz;
         real ak = EXP(k2*EXP_COEFFICIENT) / k2;
-#ifdef USE_DOUBLE_SINGLE
-        real _temp_energy = reciprocalCoefficient*ak*(sum.x*sum.x + sum.y*sum.y);
-        energy = DS_add_float_rhs(energy, _temp_energy);
-#else
         energy += reciprocalCoefficient*ak*(sum.x*sum.x + sum.y*sum.y);
-#endif
         index += GLOBAL_SIZE;
     }
-    STORE_ENERGY
+    energyBuffer[GLOBAL_ID] += energy;
 }
 
 /**
