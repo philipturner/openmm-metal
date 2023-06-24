@@ -114,9 +114,9 @@ Scaling behavior (Water Box, Amber Forcefield, No Cutoff):
 | Atoms | OpenMM OpenCL | Metal TG=1 | Metal TG=2 | Metal TG=4 | Metal TG=8 |
 | ----- | ------------- | ----- | ----- | ----- | ----- |
 | 96    | ~65 µs        | 9 µs  | 7 µs  | 6 µs  | 6 µs  |
-| 306   | ~65 µs        | 9 µs  | 7 µs  |
-| 774   | ~65 µs        | 9 µs  | 7 µs  |
-| 2661  | ~65 µs        | 9 µs  | 7 µs  |
+| 306   | ~65 µs        | 9 µs  | 7 µs  | -     | -     |
+| 774   | ~65 µs        | 9 µs  | 7 µs  | -     | -     |
+| 2661  | ~65 µs        | 9 µs  | 7 µs  | -     | -     |
 | 4158  | ~65 µs        | 9 µs  | 7 µs  | 6 µs  | 6 µs  |
 
 ## Testing
