@@ -120,7 +120,7 @@ void MetalNonbondedUtilities::addInteraction(bool usesCutoff, bool usesPeriodic,
         this->useNeighborList = true;
       } else {
         std::cout << std::endl;
-        std::cout << "[Metal] Error: invalid option for ";
+        std::cout << "[Metal] Error: Invalid option for ";
         std::cout << "'OPENMM_METAL_USE_NEIGHBOR_LIST'." << std::endl;
         std::cout << "[Metal] Specified '" << overrideUseList << "', but ";
         std::cout << "expected either '0' or '1'." << std::endl;

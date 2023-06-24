@@ -79,8 +79,26 @@ static bool isSupported(cl::Platform platform) {
 }
 
 MetalContext::MetalContext(const System& system, int platformIndex, int deviceIndex, const string& precision, MetalPlatform::PlatformData& platformData, MetalContext* originalContext) :
-        ComputeContext(system), platformData(platformData), numForceBuffers(0), hasAssignedPosqCharges(false),
-        integration(NULL), expression(NULL), bonded(NULL), nonbonded(NULL), pinnedBuffer(NULL) {
+        ComputeContext(system), platformData(platformData), numForceBuffers(0), enableKernelProfiling(false), hasAssignedPosqCharges(false),
+        integration(NULL), expression(NULL), bonded(NULL), nonbonded(NULL), pinnedBuffer(NULL), profileStartTime(0) {
+    
+    char *optionProfileKernels = getenv("OPENMM_METAL_PROFILE_KERNELS");
+    if (optionProfileKernels != nullptr) {
+      if (strcmp(optionProfileKernels, "0") == 0) {
+        this->enableKernelProfiling = false;
+      } else if (strcmp(optionProfileKernels, "1") == 0) {
+        this->enableKernelProfiling = true;
+      } else {
+        std::cout << std::endl;
+        std::cout << "[Metal] Error: Invalid option for ";
+        std::cout << "'OPENMM_METAL_PROFILE_KERNELS'." << std::endl;
+        std::cout << "[Metal] Specified '" << optionProfileKernels << "', but ";
+        std::cout << "expected either '0' or '1'." << std::endl;
+        std::cout << "[Metal] Quitting now." << std::endl;
+        exit(7);
+      }
+    }
+    
     if (precision == "single") {
         useDoublePrecision = false;
         useMixedPrecision = false;
@@ -381,8 +399,16 @@ MetalContext::MetalContext(const System& system, int platformIndex, int deviceIn
         contextDevices.push_back(device);
         cl_context_properties cprops[] = {CL_CONTEXT_PLATFORM, (cl_context_properties) platforms[bestPlatform](), 0};
         if (originalContext == NULL) {
-            context = cl::Context(contextDevices, cprops, errorCallback);
+          context = cl::Context(contextDevices, cprops, errorCallback);
+          if (enableKernelProfiling) {
+            defaultQueue = cl::CommandQueue(context, device, CL_QUEUE_PROFILING_ENABLE);
+            printf("[Metal] Kernel profiling enabled.\n");
+            printf("[Metal] Will log performance data every 500 GPU commands.\n");
+            printf("[Metal] Logging raw profiling data.\n");
+            printf("[ ");
+          } else {
             defaultQueue = cl::CommandQueue(context, device);
+          }
         }
         else {
             context = originalContext->context;
@@ -584,6 +610,12 @@ MetalContext::~MetalContext() {
         delete bonded;
     if (nonbonded != NULL)
         delete nonbonded;
+  if (enableKernelProfiling) {
+//    printf("[Metal] Logging raw profiling data.\n");
+//    printf("[ ");
+    printProfilingEvents();
+    printf(" ]\n");
+  }
 }
 
 void MetalContext::initialize() {
@@ -763,13 +795,49 @@ void MetalContext::executeKernel(cl::Kernel& kernel, int workUnits, int blockSiz
         blockSize = ThreadBlockSize;
     int size = std::min((workUnits+blockSize-1)/blockSize, numThreadBlocks)*blockSize;
     try {
+      if (enableKernelProfiling) {
+        cl::Event event;
+        currentQueue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(size), cl::NDRange(blockSize), NULL, &event);
+        profilingEvents.push_back(event);
+        profilingKernelNames.push_back(kernel.getInfo<CL_KERNEL_FUNCTION_NAME>());
+        if (profilingEvents.size() >= 500) {
+//          printf("[Metal] Logging raw profiling data.\n");
+//          printf("[ ");
+          printProfilingEvents();
+//          printf(" ]\n");
+        }
+      } else {
         currentQueue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(size), cl::NDRange(blockSize));
+      }
     }
     catch (cl::Error err) {
         stringstream str;
         str<<"Error invoking kernel "<<kernel.getInfo<CL_KERNEL_FUNCTION_NAME>()<<": "<<err.what()<<" ("<<err.err()<<")";
         throw OpenMMException(str.str());
     }
+}
+
+void MetalContext::printProfilingEvents() {
+    for (int i = 0; i < profilingEvents.size(); i++) {
+        cl::Event event = profilingEvents[i];
+        event.wait();
+        cl_ulong start, end;
+        event.getProfilingInfo(CL_PROFILING_COMMAND_START, &start);
+        event.getProfilingInfo(CL_PROFILING_COMMAND_END, &end);
+        if (profileStartTime == 0)
+            profileStartTime = start;
+        else
+            printf(",\n");
+        printf("{ \"pid\":1, \"tid\":1, \"ts\":%.6g, \"dur\":%g, \"ph\":\"X\", \"name\":\"%s\" }",
+#if __APPLE__ && defined(__aarch64__)
+               // Workaround for Apple's OpenCL driver bug.
+               0.001*(start-profileStartTime)*125.0/3.0, 0.001*(end-start)*125.0/3.0, profilingKernelNames[i].c_str());
+#else
+                0.001*(start-profileStartTime), 0.001*(end-start), profilingKernelNames[i].c_str());
+#endif
+    }
+    profilingEvents.clear();
+    profilingKernelNames.clear();
 }
 
 int MetalContext::computeThreadBlockSize(double memory) const {

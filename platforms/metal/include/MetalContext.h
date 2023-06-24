@@ -486,18 +486,40 @@ public:
      * Get whether the device being used supports double precision math.
      */
     bool getSupportsDoublePrecision() const {
-        return supportsDoublePrecision;
+      return false;
     }
+  
+private:
+  __attribute__((__noinline__))
+  void precisionFailure(bool reasonMixed) const {
+    if (reasonMixed) {
+      std::cout << "[Metal] Error: Detected usage of mixed precision.";
+    } else {
+      std::cout << "[Metal] Error: Detected usage of double precision.";
+    }
+    std::cout << std::endl;
+    std::cout << "[Metal] This precision is no longer supported." << std::endl;
+    std::cout << "[Metal] Quitting now." << std::endl;
+    exit(8);
+  }
+  
+public:
     /**
      * Get whether double precision is being used.
      */
     bool getUseDoublePrecision() const {
+      if (useDoublePrecision) {
+        precisionFailure(false);
+      }
         return useDoublePrecision;
     }
     /**
      * Get whether mixed precision is being used.
      */
     bool getUseMixedPrecision() const {
+      if (useMixedPrecision) {
+        precisionFailure(true);
+      }
         return useMixedPrecision;
     }
     /**
@@ -666,6 +688,7 @@ public:
     void flushQueue();
 private:
     MetalPlatform::PlatformData& platformData;
+    void printProfilingEvents();
     int deviceIndex;
     int platformIndex;
     int contextIndex;
@@ -673,7 +696,7 @@ private:
     int numThreadBlocks;
     int numForceBuffers;
     int simdWidth;
-    bool supports64BitGlobalAtomics, supportsDoublePrecision, useDoublePrecision, useMixedPrecision, boxIsTriclinic, hasAssignedPosqCharges;
+  bool supports64BitGlobalAtomics, supportsDoublePrecision, useDoublePrecision, useMixedPrecision, boxIsTriclinic, hasAssignedPosqCharges, enableKernelProfiling;
     mm_float4 periodicBoxSize, invPeriodicBoxSize, periodicBoxVecX, periodicBoxVecY, periodicBoxVecZ;
     mm_double4 periodicBoxSizeDouble, invPeriodicBoxSizeDouble, periodicBoxVecXDouble, periodicBoxVecYDouble, periodicBoxVecZDouble;
     std::string defaultOptimizationOptions;
@@ -708,6 +731,9 @@ private:
     std::map<std::string, double> energyParamDerivWorkspace;
     std::vector<cl::Memory*> autoclearBuffers;
     std::vector<int> autoclearBufferSizes;
+    std::vector<cl::Event> profilingEvents;
+    std::vector<std::string> profilingKernelNames;
+    cl_ulong profileStartTime;
     MetalIntegrationUtilities* integration;
     MetalExpressionUtilities* expression;
     MetalBondedUtilities* bonded;

@@ -53,7 +53,7 @@ python3 benchmark.py --test apoa1rf --seconds 15 --platform HIP
 
 OpenMM's current energy minimizer hard-codes checks for the `CUDA`, `OpenCL`, and `HIP` platforms. The Metal backend is currently labeled `HIP` everywhere to bypass this limitation. The plugin name will change to `Metal` after the next OpenMM version release, which fixes the issue. To prevent source-breaking changes, check for both the `HIP` and `Metal` backends in your client code.
 
-## Sequential Throughput
+### Sequential Throughput
 
 Due to its dependency on OpenMM 8.0.0, the Metal plugin can't implement an optimization inside the main code base that speeds up small systems. Therefore, there is an environment variable that can force-disable the usage of nearest neighbor lists inside Metal kernels. Turning off the neighbor list can substantially improve simulation speed for systems with under 3000 atoms.
 
@@ -64,12 +64,7 @@ export OPENMM_METAL_USE_NEIGHBOR_LIST=2 # runtime crash
 unset OPENMM_METAL_USE_NEIGHBOR_LIST # accepted, automatically chooses whether to use list
 ```
 
-TODO: How much speedup does this provide with 21 atoms? 96 atoms? Table demonstrating scaling behavior?
-
-Scaling behavior:
-- PME
-- Amber Forcefield, 
-- Water Box
+Scaling behavior (Water Box, Amber Forcefield, PME):
 
 | Atoms | Force No List | Force Use List | Auto |
 | ----- | ----- | ----- | ----- |
@@ -79,9 +74,29 @@ Scaling behavior:
 | 306   | 1010 ns/day |  860 ns/day | 1010 ns/day |
 | 774   |  739 ns/day |  637 ns/day |  739 ns/day |
 | 2661  |  490 ns/day |  438 ns/day |  490 ns/day |
-| 4158  |  345 ns/day |  339 ns/day |  339 ns/day |
+| 4158  |  347 ns/day |  340 ns/day |  340 ns/day |
 
 The above table is not a great example of the speedup possible by eliminating the sequential throughput bottleneck. Typically, this will provide an order of magnitude speedup. As in, not 18% speedup, but 18x speedup. Why that is not happening needs to be investigated further.
+
+
+<!--
+
+TODO: Switch to Metal and fuse several hundred commands into the same command buffer, but only if you've profiled at runtime that they're very quick. This will require some degree of autotuning and a latency penalty on the command buffers it profiles. Also, attributing each performance datum to the singular GPU kernel it came from.
+
+TODO: After switching to Metal, provide an option of how many kernels to fuse into a command buffer. This overrides any option the framework sets, and allows >1 command/command buffer while profiling. The cost is jumbled names for each group of X consecutive kernels.
+
+-->
+
+### Profiling
+
+The Metal plugin has can use the OpenCL queue profiling API to extract performance data about kernels. This API prevents batching of commands into command buffers, and reports the GPU start and end time of each buffer. The results are written to stdout in the JSON format used by https://ui.perfetto.dev.
+
+```
+export OPENMM_METAL_PROFILE_KERNELS=0 # accepted, does not profile
+export OPENMM_METAL_PROFILE_KERNELS=1 # accepted, prints data to the console
+export OPENMM_METAL_PROFILE_KERNELS=2 # runtime crash
+unset OPENMM_METAL_PROFILE_KERNELS # accepted, does not profile
+```
 
 ## Testing
 
