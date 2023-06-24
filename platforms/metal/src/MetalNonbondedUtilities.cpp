@@ -443,7 +443,7 @@ void MetalNonbondedUtilities::computeInteractions(int forceGroups, bool includeF
 bool MetalNonbondedUtilities::updateNeighborListSize() {
     if (!useCutoff)
         return false;
-    if (context.getStepsSinceReorder() == 0)
+    if (context.getStepsSinceReorder() == 0 || tilesAfterReorder == 0)
         tilesAfterReorder = pinnedCountMemory[0];
     else if (context.getStepsSinceReorder() > 25 && pinnedCountMemory[0] > 1.1*tilesAfterReorder)
         context.forceReorder();
