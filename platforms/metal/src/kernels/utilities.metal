@@ -108,29 +108,25 @@ __kernel void reduceForces(__global long* restrict longBuffer, __global real4* r
 __kernel void reduceEnergy(__global const mixed* restrict energyBuffer, __global mixed* restrict result, int bufferSize, int workGroupSize, __local mixed* tempBuffer) {
     const unsigned int thread = get_local_id(0);
     mixed sum = 0;
-    // TODO: Try reduceEnergy optimization after incorporating mixed precision.
+    // TODO: Try reduceEnergy optimization from OpenMM.
     for (unsigned int index = thread; index < bufferSize; index += get_local_size(0))
         sum += energyBuffer[index];
-    
+  
 #ifdef VENDOR_APPLE
     sum = sub_group_reduce_add(sum);
-    
-    // Only write if you're the first thread of the SIMD.
-    // This saves threadgroup bandwidth.
-    if (simd_is_first()) {
-        tempBuffer[thread] = sum;
-        
-        barrier(CLK_LOCAL_MEM_FENCE);
-        if (thread%(32*2) == 0 && thread+32 < workGroupSize)
-            tempBuffer[thread] += tempBuffer[thread+32];
-        
-        barrier(CLK_LOCAL_MEM_FENCE);
-        if (thread%(64*2) == 0 && thread+64 < workGroupSize)
-            tempBuffer[thread] += tempBuffer[thread+64];
-        
-        barrier(CLK_LOCAL_MEM_FENCE);
-        if (thread%(128*2) == 0 && thread+128 < workGroupSize)
-            tempBuffer[thread] += tempBuffer[thread+128];
+  
+    if (thread % 32 == 0) {
+      tempBuffer[thread / 32] = sum;
+    }
+    barrier(CLK_LOCAL_MEM_FENCE);
+    if (thread < 32) {
+      if (thread >= get_local_size(0) / 32) {
+        sum = 0;
+      } else {
+        sum = tempBuffer[thread];
+      }
+      sum = sub_group_reduce_add(sum);
+      *result = sum;
     }
 #else
     tempBuffer[thread] = sum;
@@ -139,9 +135,9 @@ __kernel void reduceEnergy(__global const mixed* restrict energyBuffer, __global
         if (thread%(i*2) == 0 && thread+i < workGroupSize)
             tempBuffer[thread] += tempBuffer[thread+i];
     }
+  if (thread == 0)
+      *result = tempBuffer[0];
 #endif
-    if (thread == 0)
-        *result = tempBuffer[0];
 }
 
 /**

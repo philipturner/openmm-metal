@@ -81,9 +81,7 @@ The above table is not a great example of the speedup possible by eliminating th
 
 <!--
 
-TODO: Switch to Metal and fuse several hundred commands into the same command buffer, but only if you've profiled at runtime that they're very quick. This will require some degree of autotuning and a latency penalty on the command buffers it profiles. Also, attributing each performance datum to the singular GPU kernel it came from.
-
-TODO: After switching to Metal, provide an option of how many kernels to fuse into a command buffer + timeout before it eagerly dispatches. This overrides any option the framework sets, and allows >1 command/command buffer while profiling. The downside is jumbled names for each group of X consecutive kernels.
+TODO: Switch to Metal and fuse several hundred commands into the same command buffer. Provide an option to specify how many commands to fuse. This overrides any default, and allows >1 command/command buffer while profiling. The downside is jumbled names for each group of X consecutive kernels.
 
 -->
 
