@@ -89,7 +89,7 @@ TODO: After switching to Metal, provide an option of how many kernels to fuse in
 
 ### Profiling
 
-The Metal plugin has can use the OpenCL queue profiling API to extract performance data about kernels. This API prevents batching of commands into command buffers, and reports the GPU start and end time of each buffer. The results are written to stdout in the JSON format used by https://ui.perfetto.dev.
+The Metal plugin can use the OpenCL queue profiling API to extract performance data about kernels. This API prevents batching of commands into command buffers, and reports the GPU start and end time of each buffer. The results are written to stdout in the JSON format used by https://ui.perfetto.dev.
 
 ```
 export OPENMM_METAL_PROFILE_KERNELS=0 # accepted, does not profile
