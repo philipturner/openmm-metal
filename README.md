@@ -53,6 +53,36 @@ python3 benchmark.py --test apoa1rf --seconds 15 --platform HIP
 
 OpenMM's current energy minimizer hard-codes checks for the `CUDA`, `OpenCL`, and `HIP` platforms. The Metal backend is currently labeled `HIP` everywhere to bypass this limitation. The plugin name will change to `Metal` after the next OpenMM version release, which fixes the issue. To prevent source-breaking changes, check for both the `HIP` and `Metal` backends in your client code.
 
+## Sequential Throughput
+
+Due to its dependency on OpenMM 8.0.0, the Metal plugin can't implement an optimization inside the main code base that speeds up small systems. Therefore, there is an environment variable that can force-disable the usage of nearest neighbor lists inside Metal kernels. Turning off the neighbor list can substantially improve simulation speed for systems with under 3000 atoms.
+
+```
+export OPENMM_METAL_USE_NEIGHBOR_LIST=0 # accepted, force-disables neighor list
+export OPENMM_METAL_USE_NEIGHBOR_LIST=1 # accepted, forces usage of neighbor list
+export OPENMM_METAL_USE_NEIGHBOR_LIST=2 # runtime crash
+unset OPENMM_METAL_USE_NEIGHBOR_LIST # accepted, automatically chooses whether to use list
+```
+
+TODO: How much speedup does this provide with 21 atoms? 96 atoms? Table demonstrating scaling behavior?
+
+Scaling behavior:
+- PME
+- Amber Forcefield, 
+- Water Box
+
+| Atoms | Force No List | Force Use List | Auto |
+| ----- | ----- | ----- | ----- |
+| 6     | 1380 ns/day | 1120 ns/day | 1380 ns/day |
+| 21    | 1260 ns/day | 1120 ns/day | 1260 ns/day |
+| 96    | 1210 ns/day | 1040 ns/day | 1210 ns/day |
+| 306   | 1010 ns/day |  860 ns/day | 1010 ns/day |
+| 774   |  739 ns/day |  637 ns/day |  739 ns/day |
+| 2661  |  490 ns/day |  438 ns/day |  490 ns/day |
+| 4158  |  345 ns/day |  339 ns/day |  339 ns/day |
+
+The above table is not a great example of the speedup possible by eliminating the sequential throughput bottleneck. Typically, this will provide an order of magnitude speedup. As in, not 18% speedup, but 18x speedup. Why that is not happening needs to be investigated further.
+
 ## Testing
 
 <!--

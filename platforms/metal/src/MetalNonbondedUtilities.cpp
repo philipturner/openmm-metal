@@ -32,6 +32,7 @@
 #include "MetalExpressionUtilities.h"
 #include "MetalSort.h"
 #include <algorithm>
+#include <iostream>
 #include <map>
 #include <set>
 #include <utility>
@@ -109,6 +110,26 @@ void MetalNonbondedUtilities::addInteraction(bool usesCutoff, bool usesPeriodic,
     useCutoff = usesCutoff;
     usePeriodic = usesPeriodic;
     this->useNeighborList |= ((useNeighborList || deviceIsCpu) && useCutoff);
+  
+  {
+    char *overrideUseList = getenv("OPENMM_METAL_USE_NEIGHBOR_LIST");
+    if (overrideUseList != nullptr) {
+      if (strcmp(overrideUseList, "0") == 0) {
+        this->useNeighborList = false;
+      } else if (strcmp(overrideUseList, "1") == 0) {
+        this->useNeighborList = true;
+      } else {
+        std::cout << std::endl;
+        std::cout << "[Metal] Error: invalid option for ";
+        std::cout << "'OPENMM_METAL_USE_NEIGHBOR_LIST'." << std::endl;
+        std::cout << "[Metal] Specified '" << overrideUseList << "', but ";
+        std::cout << "expected either '0' or '1'." << std::endl;
+        std::cout << "[Metal] Quitting now." << std::endl;
+        exit(7);
+      }
+    }
+  }
+  
     groupCutoff[forceGroup] = cutoffDistance;
     groupFlags |= 1<<forceGroup;
     if (kernel.size() > 0) {
@@ -390,8 +411,10 @@ void MetalNonbondedUtilities::prepareInteractions(int forceGroups) {
     context.getQueue().enqueueReadBuffer(interactionCount.getDeviceBuffer(), CL_FALSE, 0, sizeof(int), pinnedCountMemory, NULL, &downloadCountEvent);
     
     // Segment the command stream to avoid stalls later.
-    if (groupKernels[forceGroups].hasForces)
+    if (useNeighborList && numTiles > 0) {
+      if (groupKernels[forceGroups].hasForces)
         context.getQueue().flush();
+    }
 }
 
 void MetalNonbondedUtilities::computeInteractions(int forceGroups, bool includeForces, bool includeEnergy) {
