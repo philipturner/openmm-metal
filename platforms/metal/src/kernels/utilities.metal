@@ -108,10 +108,38 @@ __kernel void reduceForces(__global long* restrict longBuffer, __global real4* r
 __kernel void reduceEnergy(__global const mixed* restrict energyBuffer, __global mixed* restrict result, int bufferSize, int workGroupSize, __local mixed* tempBuffer) {
     const unsigned int thread = get_local_id(0);
     mixed sum = 0;
-    // TODO: Try reduceEnergy optimization from OpenMM.
-    for (unsigned int index = thread; index < bufferSize; index += get_local_size(0))
-        sum += energyBuffer[index];
+    int bufferSizeFloor = bufferSize - bufferSize % 16;
   
+  #if REDUCE_ENERGY_MULTIPLE_THREADGROUPS
+    for (unsigned int index = get_global_id(0); index < bufferSizeFloor / 16; index += get_global_size(0))
+  #else
+    for (unsigned int index = thread; index < bufferSizeFloor / 16; index += get_local_size(0))
+  #endif
+    {
+      float16 value = ((__global const float16*)energyBuffer)[index];
+      sum += value[0];
+      sum += value[1];
+      sum += value[2];
+      sum += value[3];
+      sum += value[4];
+      sum += value[5];
+      sum += value[6];
+      sum += value[7];
+      sum += value[8];
+      sum += value[9];
+      sum += value[10];
+      sum += value[11];
+      sum += value[12];
+      sum += value[13];
+      sum += value[14];
+      sum += value[15];
+    }
+  
+    unsigned int index = bufferSizeFloor + thread;
+    if (index < bufferSize) {
+      sum += energyBuffer[index];
+    }
+
 #ifdef VENDOR_APPLE
     sum = sub_group_reduce_add(sum);
   
@@ -126,7 +154,11 @@ __kernel void reduceEnergy(__global const mixed* restrict energyBuffer, __global
         sum = tempBuffer[thread];
       }
       sum = sub_group_reduce_add(sum);
+#if REDUCE_ENERGY_MULTIPLE_THREADGROUPS
+      result[get_group_id(0)] = sum;
+#else
       *result = sum;
+#endif
     }
 #else
     tempBuffer[thread] = sum;
@@ -135,8 +167,13 @@ __kernel void reduceEnergy(__global const mixed* restrict energyBuffer, __global
         if (thread%(i*2) == 0 && thread+i < workGroupSize)
             tempBuffer[thread] += tempBuffer[thread+i];
     }
-  if (thread == 0)
+  if (thread == 0) {
+#if REDUCE_ENERGY_MULTIPLE_THREADGROUPS
+      result[get_group_id(0)] = tempBuffer[0];
+#else
       *result = tempBuffer[0];
+#endif
+  }
 #endif
 }
 

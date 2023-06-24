@@ -78,6 +78,33 @@ static bool isSupported(cl::Platform platform) {
             vendor.find("Intel") == 0);
 }
 
+// https://stackoverflow.com/a/9753581
+inline bool is_valid_int(const char *str) {
+   // Handle negative numbers.
+   //
+  if (*str == '-') {
+    ++str;
+  }
+
+   // Handle empty string or just "-".
+   //
+  if (!*str) {
+    return false;
+  }
+
+   // Check for non-digit chars in the rest of the stirng.
+   //
+   while (*str) {
+     if (!isdigit(*str)) {
+       return false;
+     } else {
+       ++str;
+     }
+   }
+
+   return true;
+}
+
 MetalContext::MetalContext(const System& system, int platformIndex, int deviceIndex, const string& precision, MetalPlatform::PlatformData& platformData, MetalContext* originalContext) :
         ComputeContext(system), platformData(platformData), numForceBuffers(0), enableKernelProfiling(false), hasAssignedPosqCharges(false),
         integration(NULL), expression(NULL), bonded(NULL), nonbonded(NULL), pinnedBuffer(NULL), profileStartTime(0) {
@@ -98,6 +125,29 @@ MetalContext::MetalContext(const System& system, int platformIndex, int deviceIn
         exit(7);
       }
     }
+          
+    char *optionReduceEnergyThreadgroups = getenv("OPENMM_METAL_REDUCE_ENERGY_THREADGROUPS");
+          if (optionReduceEnergyThreadgroups != nullptr) {
+            bool fail = true;
+            if (is_valid_int(optionReduceEnergyThreadgroups)) {
+              int numThreadgroups = atoi(optionReduceEnergyThreadgroups);
+              if (numThreadgroups >= 1 && numThreadgroups <= 1024) {
+                fail = false;
+                this->reduceEnergyThreadgroups = numThreadgroups;
+              }
+            }
+            if (fail) {
+              std::cout << std::endl;
+              std::cout << "[Metal] Error: Invalid option for ";
+              std::cout << "'OPENMM_METAL_REDUCE_ENERGY_THREADGROUPS'." << std::endl;
+              std::cout << "[Metal] Specified '" << optionReduceEnergyThreadgroups << "', but ";
+              std::cout << "expected a number between '1' and '1024'." << std::endl;
+              std::cout << "[Metal] Quitting now." << std::endl;
+              exit(9);
+            }
+          } else {
+            this->reduceEnergyThreadgroups = 1;
+          }
     
     if (precision == "single") {
         useDoublePrecision = false;
@@ -414,6 +464,16 @@ MetalContext::MetalContext(const System& system, int platformIndex, int deviceIn
             context = originalContext->context;
             defaultQueue = originalContext->defaultQueue;
         }
+      
+      
+      if (reduceEnergyThreadgroups > 1) {
+        compilationDefines["REDUCE_ENERGY_MULTIPLE_THREADGROUPS"] = "1";
+      } else {
+        compilationDefines["REDUCE_ENERGY_MULTIPLE_THREADGROUPS"] = "0";
+      }
+      
+      
+      
         currentQueue = defaultQueue;
         numAtoms = system.getNumParticles();
         paddedNumAtoms = TileSize*((numAtoms+TileSize-1)/TileSize);
@@ -622,24 +682,23 @@ void MetalContext::initialize() {
     bonded->initialize(system);
     numForceBuffers = std::max(numForceBuffers, (int) platformData.contexts.size());
     int energyBufferSize = max(numThreadBlocks*ThreadBlockSize, nonbonded->getNumEnergyBuffers());
+  if (useDoublePrecision || useMixedPrecision) {
+    std::cout << "[Metal] Detected unsupported precision: ";
     if (useDoublePrecision) {
-        forceBuffers.initialize<mm_double4>(*this, paddedNumAtoms*numForceBuffers, "forceBuffers");
-        force.initialize<mm_double4>(*this, &forceBuffers.getDeviceBuffer(), paddedNumAtoms, "force");
-        energyBuffer.initialize<cl_double>(*this, energyBufferSize, "energyBuffer");
-        energySum.initialize<cl_double>(*this, 1, "energySum");
+      std::cout << "double";
+    } else {
+      std::cout << "mixed";
     }
-    else if (useMixedPrecision) {
-        forceBuffers.initialize<mm_float4>(*this, paddedNumAtoms*numForceBuffers, "forceBuffers");
-        force.initialize<mm_float4>(*this, &forceBuffers.getDeviceBuffer(), paddedNumAtoms, "force");
-        energyBuffer.initialize<cl_double>(*this, energyBufferSize, "energyBuffer");
-        energySum.initialize<cl_double>(*this, 1, "energySum");
-    }
-    else {
-        forceBuffers.initialize<mm_float4>(*this, paddedNumAtoms*numForceBuffers, "forceBuffers");
-        force.initialize<mm_float4>(*this, &forceBuffers.getDeviceBuffer(), paddedNumAtoms, "force");
-        energyBuffer.initialize<cl_float>(*this, energyBufferSize, "energyBuffer");
-        energySum.initialize<cl_float>(*this, 1, "energySum");
-    }
+    std::cout << " precision." << std::endl;
+    std::cout << "[Metal] Quitting now." << std::endl;
+    exit(10);
+  }
+
+    forceBuffers.initialize<mm_float4>(*this, paddedNumAtoms*numForceBuffers, "forceBuffers");
+    force.initialize<mm_float4>(*this, &forceBuffers.getDeviceBuffer(), paddedNumAtoms, "force");
+    energyBuffer.initialize<cl_float>(*this, energyBufferSize, "energyBuffer");
+    energySum.initialize<cl_float>(*this, reduceEnergyThreadgroups, "energySum");
+    
     reduceForcesKernel.setArg<cl::Buffer>(0, longForceBuffer.getDeviceBuffer());
     reduceForcesKernel.setArg<cl::Buffer>(1, forceBuffers.getDeviceBuffer());
     reduceForcesKernel.setArg<cl_int>(2, paddedNumAtoms);
@@ -801,10 +860,7 @@ void MetalContext::executeKernel(cl::Kernel& kernel, int workUnits, int blockSiz
         profilingEvents.push_back(event);
         profilingKernelNames.push_back(kernel.getInfo<CL_KERNEL_FUNCTION_NAME>());
         if (profilingEvents.size() >= 500) {
-//          printf("[Metal] Logging raw profiling data.\n");
-//          printf("[ ");
           printProfilingEvents();
-//          printf(" ]\n");
         }
       } else {
         currentQueue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(size), cl::NDRange(blockSize));
@@ -959,17 +1015,14 @@ double MetalContext::reduceEnergy() {
     reduceEnergyKernel.setArg<cl_int>(2, energyBuffer.getSize());
     reduceEnergyKernel.setArg<cl_int>(3, workGroupSize);
     reduceEnergyKernel.setArg(4, workGroupSize*energyBuffer.getElementSize(), NULL);
-    executeKernel(reduceEnergyKernel, workGroupSize, workGroupSize);
-    if (getUseDoublePrecision() || getUseMixedPrecision()) {
-        double energy;
-        energySum.download(&energy);
-        return energy;
+    executeKernel(reduceEnergyKernel, workGroupSize*energySum.getSize(), workGroupSize);
+    energySum.download(pinnedMemory);
+  
+    float energy = 0;
+    for (int i = 0; i < reduceEnergyThreadgroups; ++i) {
+      energy += ((float*)pinnedMemory)[i];
     }
-    else {
-        float energy;
-        energySum.download(&energy);
-        return energy;
-    }
+    return energy;
 }
 
 void MetalContext::setCharges(const vector<double>& charges) {

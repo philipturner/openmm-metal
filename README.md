@@ -96,6 +96,29 @@ export OPENMM_METAL_PROFILE_KERNELS=2 # runtime crash
 unset OPENMM_METAL_PROFILE_KERNELS # accepted, does not profile
 ```
 
+### Reducing Energy
+
+By default, energy summation is serialized among a single threadgroup. The `reduceEnergy` kernel consumes a significant proportion of execution time for small systems. You can make reduction occur across more than one threadgroup with the following variable. Note that this typically speeds up small systems and slows down large systems.
+
+```
+export OPENMM_METAL_REDUCE_ENERGY_THREADGROUPS=1 # accepted, 1 threadgroup used
+export OPENMM_METAL_REDUCE_ENERGY_THREADGROUPS=3 # accepted, 3 threadgroups used
+export OPENMM_METAL_REDUCE_ENERGY_THREADGROUPS=-1 # runtime crash
+unset OPENMM_METAL_REDUCE_ENERGY_THREADGROUPS # accepted, 1 threadgroup used
+```
+
+Scaling behavior (Water Box, Amber Forcefield, No Cutoff):
+- top of table shows number of threadgroups
+- cells show time to finish the `reduceEnergy` kernel
+
+| Atoms | OpenMM OpenCL | Metal TG=1 | Metal TG=2 | Metal TG=4 | Metal TG=8 |
+| ----- | ------------- | ----- | ----- | ----- | ----- |
+| 96    | ~65 µs        | 9 µs  | 7 µs  | 6 µs  | 6 µs  |
+| 306   | ~65 µs        | 9 µs  | 7 µs  |
+| 774   | ~65 µs        | 9 µs  | 7 µs  |
+| 2661  | ~65 µs        | 9 µs  | 7 µs  |
+| 4158  | ~65 µs        | 9 µs  | 7 µs  | 6 µs  | 6 µs  |
+
 ## Testing
 
 <!--

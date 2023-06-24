@@ -696,6 +696,7 @@ private:
     int numThreadBlocks;
     int numForceBuffers;
     int simdWidth;
+  int reduceEnergyThreadgroups;
   bool supports64BitGlobalAtomics, supportsDoublePrecision, useDoublePrecision, useMixedPrecision, boxIsTriclinic, hasAssignedPosqCharges, enableKernelProfiling;
     mm_float4 periodicBoxSize, invPeriodicBoxSize, periodicBoxVecX, periodicBoxVecY, periodicBoxVecZ;
     mm_double4 periodicBoxSizeDouble, invPeriodicBoxSizeDouble, periodicBoxVecXDouble, periodicBoxVecYDouble, periodicBoxVecZDouble;
