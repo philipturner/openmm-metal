@@ -30,6 +30,8 @@
  * -------------------------------------------------------------------------- */
 
 #include "MetalTests.h"
+
+// TODO: Include the new custom HBond force once OpenMM 8.1.0 releases.
 #include "TestCustomHbondForce.h"
 
 void runPlatformTests() {
