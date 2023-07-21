@@ -241,16 +241,15 @@ Very long tests:
 
 ## Roadmap
 
-v1.0.0
-- Initial release, bringing proper support for Mac GPUs
-
-v1.1.0
-- Several incremental optimizations from the OpenMM main branch
-- AMD and Intel go into long-term service
-- Remove double and mixed precision
-
-v2.0.0
-- Replace the OpenCL dependency with Metal C++
+Releases:
+- v1.0.0
+  - Initial release, bringing proper support for Mac GPUs
+- v1.1.0
+  - Several incremental optimizations from the OpenMM main branch
+  - AMD and Intel go into long-term service
+  - Remove double and mixed precision
+- v2.0.0
+  - Replace the OpenCL dependency with Metal C++
 
 ## License
 
