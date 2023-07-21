@@ -326,6 +326,8 @@ private:
     MetalArray sortedBlocks;
     MetalArray sortedBlockCenter;
     MetalArray sortedBlockBoundingBox;
+    MetalArray largeBlockCenter;
+    MetalArray largeBlockBoundingBox;
     MetalArray oldPositions;
     MetalArray rebuildNeighborList;
     MetalSort* blockSorter;
@@ -339,7 +341,7 @@ private:
     std::map<int, double> groupCutoff;
     std::map<int, std::string> groupKernelSource;
     double lastCutoff;
-    bool useCutoff, usePeriodic, deviceIsCpu, anyExclusions, usePadding, useNeighborList, forceRebuildNeighborList;
+    bool useCutoff, usePeriodic, deviceIsCpu, anyExclusions, usePadding, useNeighborList, forceRebuildNeighborList, useLargeBlocks;
     int startTileIndex, startBlockIndex, numBlocks, maxExclusions, numForceThreadBlocks;
     int forceThreadBlockSize, interactingBlocksThreadBlockSize, groupFlags;
     unsigned int tilesAfterReorder;

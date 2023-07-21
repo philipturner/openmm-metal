@@ -117,11 +117,11 @@ MetalContext::MetalContext(const System& system, int platformIndex, int deviceIn
         this->enableKernelProfiling = true;
       } else {
         std::cout << std::endl;
-        std::cout << "[Metal] Error: Invalid option for ";
+        std::cout << METAL_LOG_HEADER << "Error: Invalid option for ";
         std::cout << "'OPENMM_METAL_PROFILE_KERNELS'." << std::endl;
-        std::cout << "[Metal] Specified '" << optionProfileKernels << "', but ";
+        std::cout << METAL_LOG_HEADER << "Specified '" << optionProfileKernels << "', but ";
         std::cout << "expected either '0' or '1'." << std::endl;
-        std::cout << "[Metal] Quitting now." << std::endl;
+        std::cout << METAL_LOG_HEADER << "Quitting now." << std::endl;
         exit(7);
       }
     }
@@ -138,11 +138,11 @@ MetalContext::MetalContext(const System& system, int platformIndex, int deviceIn
             }
             if (fail) {
               std::cout << std::endl;
-              std::cout << "[Metal] Error: Invalid option for ";
+              std::cout << METAL_LOG_HEADER << "Error: Invalid option for ";
               std::cout << "'OPENMM_METAL_REDUCE_ENERGY_THREADGROUPS'." << std::endl;
-              std::cout << "[Metal] Specified '" << optionReduceEnergyThreadgroups << "', but ";
+              std::cout << METAL_LOG_HEADER << "Specified '" << optionReduceEnergyThreadgroups << "', but ";
               std::cout << "expected a number between '1' and '1024'." << std::endl;
-              std::cout << "[Metal] Quitting now." << std::endl;
+              std::cout << METAL_LOG_HEADER << "Quitting now." << std::endl;
               exit(9);
             }
           } else {
@@ -683,14 +683,14 @@ void MetalContext::initialize() {
     numForceBuffers = std::max(numForceBuffers, (int) platformData.contexts.size());
     int energyBufferSize = max(numThreadBlocks*ThreadBlockSize, nonbonded->getNumEnergyBuffers());
   if (useDoublePrecision || useMixedPrecision) {
-    std::cout << "[Metal] Detected unsupported precision: ";
+    std::cout << METAL_LOG_HEADER << "Detected unsupported precision: ";
     if (useDoublePrecision) {
       std::cout << "double";
     } else {
       std::cout << "mixed";
     }
     std::cout << " precision." << std::endl;
-    std::cout << "[Metal] Quitting now." << std::endl;
+    std::cout << METAL_LOG_HEADER << "Quitting now." << std::endl;
     exit(10);
   }
 

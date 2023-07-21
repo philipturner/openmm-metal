@@ -55,6 +55,7 @@
 #include "MetalBondedUtilities.h"
 #include "MetalExpressionUtilities.h"
 #include "MetalIntegrationUtilities.h"
+#include "MetalLogging.h"
 #include "MetalNonbondedUtilities.h"
 #include "MetalPlatform.h"
 #include "openmm/common/ComputeContext.h"
@@ -493,13 +494,13 @@ private:
   __attribute__((__noinline__))
   void precisionFailure(bool reasonMixed) const {
     if (reasonMixed) {
-      std::cout << "[Metal] Error: Detected usage of mixed precision.";
+      std::cout << METAL_LOG_HEADER << "Error: Detected usage of mixed precision.";
     } else {
-      std::cout << "[Metal] Error: Detected usage of double precision.";
+      std::cout << METAL_LOG_HEADER << "Error: Detected usage of double precision.";
     }
     std::cout << std::endl;
-    std::cout << "[Metal] This precision is no longer supported." << std::endl;
-    std::cout << "[Metal] Quitting now." << std::endl;
+    std::cout << METAL_LOG_HEADER << "This precision is no longer supported." << std::endl;
+    std::cout << METAL_LOG_HEADER << "Quitting now." << std::endl;
     exit(8);
   }
   

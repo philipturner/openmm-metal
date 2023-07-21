@@ -29,6 +29,7 @@
 #include "MetalArray.h"
 #include "MetalContext.h"
 #include "MetalKernelSources.h"
+#include "MetalLogging.h"
 #include "MetalExpressionUtilities.h"
 #include "MetalSort.h"
 #include <algorithm>
@@ -66,7 +67,6 @@ MetalNonbondedUtilities::MetalNonbondedUtilities(MetalContext& context) : contex
         forceThreadBlockSize = 1;
     }
     else if (context.getSIMDWidth() == 32) {
-        // TODO: Try activating this code path on Intel iGPU.
         int blocksPerCore = 4;
         std::string vendor = context.getDevice().getInfo<CL_DEVICE_VENDOR>();
         if (vendor.size() >= 5 && vendor.substr(0, 5) == "Apple") {
@@ -86,6 +86,28 @@ MetalNonbondedUtilities::MetalNonbondedUtilities(MetalContext& context) : contex
     }
     pinnedCountBuffer = new cl::Buffer(context.getContext(), CL_MEM_ALLOC_HOST_PTR, sizeof(unsigned int));
     pinnedCountMemory = (unsigned int*) context.getQueue().enqueueMapBuffer(*pinnedCountBuffer, CL_TRUE, CL_MAP_READ, 0, sizeof(int));
+    
+    {
+      this->useLargeBlocks = false;
+      
+      char *overrideUseLargeBlocks = getenv("OPENMM_METAL_USE_LARGE_BLOCKS");
+      if (overrideUseLargeBlocks != nullptr) {
+        if (strcmp(overrideUseLargeBlocks, "0") == 0) {
+          this->useLargeBlocks = false;
+        } else if (strcmp(overrideUseLargeBlocks, "1") == 0) {
+          this->useLargeBlocks = true;
+        } else {
+          std::cout << std::endl;
+          std::cout << METAL_LOG_HEADER << "Error: Invalid option for ";
+          std::cout << "'OPENMM_METAL_USE_LARGE_BLOCKS'." << std::endl;
+          std::cout << METAL_LOG_HEADER << "Specified '" << overrideUseLargeBlocks << "', but ";
+          std::cout << "expected either '0' or '1'." << std::endl;
+          std::cout << METAL_LOG_HEADER << "Quitting now." << std::endl;
+          exit(7);
+        }
+      }
+    }
+    
     setKernelSource(deviceIsCpu ? MetalKernelSources::nonbonded_cpu : MetalKernelSources::nonbonded);
 }
 
@@ -120,11 +142,11 @@ void MetalNonbondedUtilities::addInteraction(bool usesCutoff, bool usesPeriodic,
         this->useNeighborList = true;
       } else {
         std::cout << std::endl;
-        std::cout << "[Metal] Error: Invalid option for ";
+        std::cout << METAL_LOG_HEADER << "Error: Invalid option for ";
         std::cout << "'OPENMM_METAL_USE_NEIGHBOR_LIST'." << std::endl;
-        std::cout << "[Metal] Specified '" << overrideUseList << "', but ";
+        std::cout << METAL_LOG_HEADER << "Specified '" << overrideUseList << "', but ";
         std::cout << "expected either '0' or '1'." << std::endl;
-        std::cout << "[Metal] Quitting now." << std::endl;
+        std::cout << METAL_LOG_HEADER << "Quitting now." << std::endl;
         exit(7);
       }
     }

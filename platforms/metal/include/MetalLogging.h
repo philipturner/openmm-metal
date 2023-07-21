@@ -1,0 +1,6 @@
+#ifndef OPENMM_METALLOGGING_H_
+#define OPENMM_METALLOGGING_H_
+
+#define METAL_LOG_HEADER "\e[0;36m[Metal]\e[0m "
+
+#endif /*OPENMM_METALLOGGING_H_*/

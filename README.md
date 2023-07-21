@@ -61,7 +61,7 @@ Due to its dependency on OpenMM 8.0.0, the Metal plugin can't implement an optim
 export OPENMM_METAL_USE_NEIGHBOR_LIST=0 # accepted, force-disables neighor list
 export OPENMM_METAL_USE_NEIGHBOR_LIST=1 # accepted, forces usage of neighbor list
 export OPENMM_METAL_USE_NEIGHBOR_LIST=2 # runtime crash
-unset OPENMM_METAL_USE_NEIGHBOR_LIST # accepted, automatically chooses whether to use list
+unset OPENMM_METAL_USE_NEIGHBOR_LIST # accepted, automatically chooses whether to use the list
 ```
 
 Scaling behavior (Water Box, Amber Forcefield, PME):
@@ -118,6 +118,21 @@ Scaling behavior (Water Box, Amber Forcefield, No Cutoff):
 | 774   | ~65 µs        | 9 µs  | 7 µs  | -     | -     |
 | 2661  | ~65 µs        | 9 µs  | 7 µs  | -     | -     |
 | 4158  | ~65 µs        | 9 µs  | 7 µs  | 6 µs  | 6 µs  |
+
+### Scaling
+
+At the several million atom range, OpenMM starts to experience $O(n^2)$ scaling. The impact of this scaling is relatively minor for the Metal platform, as Apple GPUs calculate the $O(n^2)$ part much faster than CUDA GPUs. The "large blocks" algorithm delays the onset of $O(n^2)$ scaling. It provides a net speedup for systems with over 1,000,000 atoms.
+
+The Metal plugin cannot know the number of atoms at launch time, so it cannot implement this heuristic. You must set the environment variable below to activate the "large blocks" algorithm.
+
+```
+export OPENMM_METAL_USE_LARGE_BLOCKS=0 # accepted, force-disables large blocks
+export OPENMM_METAL_USE_LARGE_BLOCKS=1 # accepted, forces usage of large blocks
+export OPENMM_METAL_USE_NEIGHBOR_LIST=2 # runtime crash
+unset OPENMM_METAL_USE_NEIGHBOR_LIST # accepted, does not use large blocks
+```
+
+TODO: Table of benchmarks for large water boxes, and four PME benchmarks from `benchmark.py`
 
 ## Testing
 
