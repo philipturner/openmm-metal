@@ -4,6 +4,11 @@ This plugin adds the Metal platform that accelerates [OpenMM](https://openmm.org
 
 The Metal plugin may transition to using the Metal API directly. This would provide greater control over the CPU-side command encoding process, solving a long-standing latency bottleneck for 1000-atom systems. However, it removes mixed and double precision on Intel Macs. <b>FP64 emulation is proven to work on Apple silicon, but is not a priority for molecular dynamics.</b> A backward-compatible OpenCL compilation path may or may not be maintained.
 
+Vendors:
+- Apple Mac GPUs are supported in current and future releases.
+- Apple iOS GPUs are not working yet, but running on iOS is an end goal.
+- AMD and Intel GPUs are in long-term service mode. The v1.0.0 tag on GitHub works, but newer versions are failing tests on Intel Macs.
+
 ## Performance
 
 Expect a 2-4x speedup for large simulations.
@@ -121,18 +126,26 @@ Scaling behavior (Water Box, Amber Forcefield, No Cutoff):
 
 ### Scaling
 
-At the several million atom range, OpenMM starts to experience $O(n^2)$ scaling. The impact of this scaling is relatively minor for the Metal platform, as Apple GPUs calculate the $O(n^2)$ part much faster than CUDA GPUs. The "large blocks" algorithm delays the onset of $O(n^2)$ scaling. It provides a net speedup for systems with over 1,000,000 atoms.
-
-The Metal plugin cannot know the number of atoms at launch time, so it cannot implement this heuristic. You must set the environment variable below to activate the "large blocks" algorithm.
+At the several million atom range, OpenMM starts to experience $O(n^2)$ scaling. The impact of this scaling is relatively minor for the Metal platform, as Apple GPUs calculate the $O(n^2)$ part much faster than CUDA GPUs. The "large blocks" algorithm delays the onset of $O(n^2)$ scaling. It provides a net speedup for most systems regardless of scale, but especially at 1,000,000+ atoms.
 
 ```
 export OPENMM_METAL_USE_LARGE_BLOCKS=0 # accepted, force-disables large blocks
 export OPENMM_METAL_USE_LARGE_BLOCKS=1 # accepted, forces usage of large blocks
 export OPENMM_METAL_USE_NEIGHBOR_LIST=2 # runtime crash
-unset OPENMM_METAL_USE_NEIGHBOR_LIST # accepted, does not use large blocks
+unset OPENMM_METAL_USE_NEIGHBOR_LIST # accepted, uses large blocks
 ```
 
-TODO: Table of benchmarks for large water boxes, and four PME benchmarks from `benchmark.py`
+Scaling behavior (Water Box, Amber Forcefield, PME):
+- s/100K/500 means "seconds per 100,000 atoms per 500 steps"
+
+Water Box Sizes | Atoms | s/100K/500 (32-blocks) | s/100K/500 (1024-blocks) |
+-- | -- | -- | --
+5.0 nm | 12255 | 4.29 | 4.21
+10.0 nm | 98880 | 2.02 | 2.02
+15.0 nm | 335025 | 1.95 | 1.90
+20.0 nm | 792450 | 2.03 | 1.92
+25.0 nm | 1550160 | 2.35 | 2.09
+30.0 nm | 2682600 | 2.61 | 2.32
 
 ## Testing
 
@@ -166,8 +179,6 @@ Quick tests:
 | CustomHbondForce               | ✅           | ✅         | ✅         |
 | CustomTorsionForce             | ✅           | ✅         | ✅         |
 | DeviceQuery                    | ✅           | ✅         | ✅         |
-| DispersionPME                  | ✅           | ✅         | ❌         |
-| Ewald                          | ✅           | ✅         | ❌         |
 | FFT                            | ✅           | ✅         | ❌         |
 | GBSAOBCForce                   | ✅           | ✅         | ✅         |
 | GayBerneForce                  | ✅           | ✅         | ❌         |
@@ -200,6 +211,8 @@ Long tests:
 | AndersenThermostat             | ✅           | ✅         | ✅         |
 | CustomManyParticleForce        | ✅           | ✅         | ✅         |
 | CustomNonbondedForce           | ✅           | ✅         | ✅         |
+| DispersionPME                  | ✅           | ✅         | ❌         |
+| Ewald                          | ✅           | ✅         | ❌         |
 | LangevinIntegrator             | ✅           | ✅         | ✅         |
 | LangevinMiddleIntegrator       | ✅           | ✅         | ✅         |
 | LocalEnergyMinimizer           | ✅           | ❌         | ✅         |
@@ -225,6 +238,17 @@ Very long tests:
 | VariableLangevinIntegrator     | ✅           | -         | -         |
 | DrudeLangevinIntegrator        | ✅           | -         | -         |
 | DrudeSCFIntegrator             | ✅           | -         | -         |
+
+## Roadmap
+
+v1.0.0
+- Initial release, bringing proper support for Mac GPUs
+v1.1.0
+- Several incremental optimizations from the OpenMM main branch
+- AMD and Intel go into long-term service
+- Remove double and mixed precision
+v2.0.0
+- Replace the OpenCL dependency with Metal C++
 
 ## License
 

@@ -88,7 +88,12 @@ MetalNonbondedUtilities::MetalNonbondedUtilities(MetalContext& context) : contex
     pinnedCountMemory = (unsigned int*) context.getQueue().enqueueMapBuffer(*pinnedCountBuffer, CL_TRUE, CL_MAP_READ, 0, sizeof(int));
     
     {
-      this->useLargeBlocks = false;
+      std::string vendor = context.getDevice().getInfo<CL_DEVICE_VENDOR>();
+      if (vendor.size() >= 5 && vendor.substr(0, 5) == "Apple") {
+        this->useLargeBlocks = true;
+      } else {
+        this->useLargeBlocks = false;
+      }
       
       char *overrideUseLargeBlocks = getenv("OPENMM_METAL_USE_LARGE_BLOCKS");
       if (overrideUseLargeBlocks != nullptr) {
