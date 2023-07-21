@@ -362,6 +362,8 @@ void MetalNonbondedUtilities::initialize(const System& system) {
         sortedBlocks.initialize(context, numAtomBlocks, 2*elementSize, "sortedBlocks");
         sortedBlockCenter.initialize(context, numAtomBlocks+1, 4*elementSize, "sortedBlockCenter");
         sortedBlockBoundingBox.initialize(context, numAtomBlocks+1, 4*elementSize, "sortedBlockBoundingBox");
+        largeBlockCenter.initialize(context, numAtomBlocks, 4*elementSize, "largeBlockCenter");
+        largeBlockBoundingBox.initialize(context, numAtomBlocks, 4*elementSize, "largeBlockBoundingBox");
         oldPositions.initialize(context, numAtoms, 4*elementSize, "oldPositions");
         rebuildNeighborList.initialize<int>(context, 1, "rebuildNeighborList");
         blockSorter = new MetalSort(context, new BlockSortTrait(context.getUseDoublePrecision()), numAtomBlocks, false);
@@ -423,7 +425,11 @@ void MetalNonbondedUtilities::prepareInteractions(int forceGroups) {
         forceRebuildNeighborList = true;
     setPeriodicBoxArgs(context, kernels.findBlockBoundsKernel, 1);
     context.executeKernel(kernels.findBlockBoundsKernel, context.getNumAtoms());
+  if (useLargeBlocks) {
+    setPeriodicBoxArgs(context, kernels.sortBoxDataKernel, 12);
+  } else {
     blockSorter->sort(sortedBlocks);
+  }
     kernels.sortBoxDataKernel.setArg<cl_int>(9, forceRebuildNeighborList);
     context.executeKernel(kernels.sortBoxDataKernel, context.getNumAtoms());
     setPeriodicBoxArgs(context, kernels.findInteractingBlocksKernel, 0);
@@ -571,6 +577,8 @@ void MetalNonbondedUtilities::createKernelsForGroups(int groups) {
             defines["USE_PERIODIC"] = "1";
         if (context.getBoxIsTriclinic())
             defines["TRICLINIC"] = "1";
+        if (useLargeBlocks)
+            defines["USE_LARGE_BLOCKS"] = "1";
         defines["MAX_EXCLUSIONS"] = context.intToString(maxExclusions);
         defines["BUFFER_GROUPS"] = (deviceIsCpu ? "4" : "2");
         string file = (deviceIsCpu ? MetalKernelSources::findInteractingBlocks_cpu : MetalKernelSources::findInteractingBlocks);
@@ -596,6 +604,10 @@ void MetalNonbondedUtilities::createKernelsForGroups(int groups) {
             kernels.sortBoxDataKernel.setArg<cl::Buffer>(7, interactionCount.getDeviceBuffer());
             kernels.sortBoxDataKernel.setArg<cl::Buffer>(8, rebuildNeighborList.getDeviceBuffer());
             kernels.sortBoxDataKernel.setArg<cl_int>(9, true);
+            if (useLargeBlocks) {
+                kernels.sortBoxDataKernel.setArg<cl::Buffer>(10, largeBlockCenter.getDeviceBuffer());
+                kernels.sortBoxDataKernel.setArg<cl::Buffer>(11, largeBlockBoundingBox.getDeviceBuffer());
+            }
             kernels.findInteractingBlocksKernel = cl::Kernel(interactingBlocksProgram, "findBlocksWithInteractions");
             kernels.findInteractingBlocksKernel.setArg<cl::Buffer>(5, interactionCount.getDeviceBuffer());
             kernels.findInteractingBlocksKernel.setArg<cl::Buffer>(6, interactingTiles.getDeviceBuffer());
@@ -611,6 +623,10 @@ void MetalNonbondedUtilities::createKernelsForGroups(int groups) {
             kernels.findInteractingBlocksKernel.setArg<cl::Buffer>(16, exclusionRowIndices.getDeviceBuffer());
             kernels.findInteractingBlocksKernel.setArg<cl::Buffer>(17, oldPositions.getDeviceBuffer());
             kernels.findInteractingBlocksKernel.setArg<cl::Buffer>(18, rebuildNeighborList.getDeviceBuffer());
+            if (useLargeBlocks) {
+                kernels.findInteractingBlocksKernel.setArg<cl::Buffer>(19, largeBlockCenter.getDeviceBuffer());
+                kernels.findInteractingBlocksKernel.setArg<cl::Buffer>(20, largeBlockBoundingBox.getDeviceBuffer());
+            }
             if (kernels.findInteractingBlocksKernel.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(context.getDevice()) < groupSize) {
                 // The device can't handle this block size, so reduce it.
 

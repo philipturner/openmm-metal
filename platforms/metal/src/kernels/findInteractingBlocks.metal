@@ -55,13 +55,42 @@ __kernel void findBlockBounds(int numAtoms, real4 periodicBoxSize, real4 invPeri
 __kernel void sortBoxData(__global const real2* restrict sortedBlock, __global const real4* restrict blockCenter,
         __global const real3* restrict blockBoundingBox, __global real4* restrict sortedBlockCenter,
         __global half* restrict sortedBlockBoundingBox, __global const real3* restrict posq, __global const real3* restrict oldPositions,
-        __global unsigned int* restrict interactionCount, __global int* restrict rebuildNeighborList, int forceRebuild) {
+        __global unsigned int* restrict interactionCount, __global int* restrict rebuildNeighborList, int forceRebuild
+#ifdef USE_LARGE_BLOCKS
+        , __global real4* restrict largeBlockCenter, __global half* restrict largeBlockBoundingBox, real4 periodicBoxSize,
+        real4 invPeriodicBoxSize, real4 periodicBoxVecX, real4 periodicBoxVecY, real4 periodicBoxVecZ
+#endif
+        ) {
     for (int i = get_global_id(0); i < NUM_BLOCKS; i += get_global_size(0)) {
         int index = (int) sortedBlock[i].y;
         sortedBlockCenter[i] = blockCenter[index];
 //        sortedBlockBoundingBox[i] = blockBoundingBox[index];
         vstorea_half3_rtp(float3(blockBoundingBox[index]), i, sortedBlockBoundingBox);
     }
+  
+#ifdef USE_LARGE_BLOCKS
+    // Compute the sizes of large blocks (composed of 32 regular blocks) starting from each block.
+
+    for (int i = get_global_id(0); i < NUM_BLOCKS; i += get_global_size(0)) {
+        real3 minPos = blockCenter[i].xyz-blockBoundingBox[i];
+        real3 maxPos = blockCenter[i].xyz+blockBoundingBox[i];
+        int last = min(i+32, NUM_BLOCKS);
+        for (int j = i+1; j < last; j++) {
+            real3 blockPos = blockCenter[j].xyz;
+            real3 width = blockBoundingBox[j];
+#ifdef USE_PERIODIC
+            real3 center = 0.5f*(maxPos+minPos);
+          
+            APPLY_PERIODIC_TO_POS_WITH_CENTER(blockPos, center)
+#endif
+            minPos = min(minPos, blockPos-width);
+            maxPos = max(maxPos, blockPos+width);
+        }
+        largeBlockCenter[i] = ((float3)(0.5f*(maxPos+minPos))).xyzz;
+//        largeBlockBoundingBox[i] = 0.5f*(maxPos-minPos);
+        vstorea_half3_rtp(0.5f*(maxPos-minPos), i, largeBlockBoundingBox);
+    }
+#endif
     
     // Also check whether any atom has moved enough so that we really need to rebuild the neighbor list.
 
@@ -86,7 +115,11 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
         __global const real3* restrict posq, unsigned int maxTiles, unsigned int startBlockIndex, unsigned int numBlocks, __global real2* restrict sortedBlocks,
         __global const real4* restrict sortedBlockCenter, __global const half* restrict sortedBlockBoundingBox,
         __global const unsigned int* restrict exclusionIndices, __global const unsigned int* restrict exclusionRowIndices, __global real3* restrict oldPositions,
-        __global const int* restrict rebuildNeighborList) {
+        __global const int* restrict rebuildNeighborList
+#ifdef USE_LARGE_BLOCKS
+        , __global real4* restrict largeBlockCenter, __global real4* restrict largeBlockBoundingBox
+#endif
+        ) {
 
     if (rebuildNeighborList[0] == 0)
         return; // The neighbor list doesn't need to be rebuilt.
@@ -148,7 +181,42 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
         // Loop over atom blocks to search for neighbors.  The threads in a warp compare block1 against 32
         // other blocks in parallel.
 
+#ifdef USE_LARGE_BLOCKS
+        uint largeBlockFlags = 0;
+        uint loadedLargeBlocks = 0;
+#endif
         for (int block2Base = block1+1; block2Base < NUM_BLOCKS; block2Base += 32) {
+#ifdef USE_LARGE_BLOCKS
+            if (loadedLargeBlocks == 0) {
+                // Check the next set of large blocks.
+
+                int largeBlockIndex = block2Base + 32*indexInWarp;
+                bool includeLargeBlock = false;
+                if (largeBlockIndex < NUM_BLOCKS) {
+                    real4 largeCenter = largeBlockCenter[largeBlockIndex];
+                    real3 largeSize = real3(vloada_half3(largeBlockIndex, largeBlockBoundingBox));
+                    real4 blockDelta = blockCenterX-largeCenter;
+#ifdef USE_PERIODIC
+                    APPLY_PERIODIC_TO_DELTA(blockDelta)
+#endif
+                    blockDelta.x = max((real) 0, fabs(blockDelta.x)-blockSizeX.x-largeSize.x);
+                    blockDelta.y = max((real) 0, fabs(blockDelta.y)-blockSizeX.y-largeSize.y);
+                    blockDelta.z = max((real) 0, fabs(blockDelta.z)-blockSizeX.z-largeSize.z);
+                    includeLargeBlock = (blockDelta.x*blockDelta.x+blockDelta.y*blockDelta.y+blockDelta.z*blockDelta.z < PADDED_CUTOFF_SQUARED);
+                }
+                largeBlockFlags = uint(simd_ballot(includeLargeBlock));
+                loadedLargeBlocks = 32;
+                SYNC_WARPS;
+            }
+            loadedLargeBlocks--;
+            if ((largeBlockFlags&1) == 0) {
+                // None of the next 32 blocks interact with block 1.
+
+                largeBlockFlags >>= 1;
+                continue;
+            }
+            largeBlockFlags >>= 1;
+#endif
             int block2 = block2Base+indexInWarp;
             bool includeBlock2 = (block2 < NUM_BLOCKS);
 #ifdef VENDOR_APPLE
