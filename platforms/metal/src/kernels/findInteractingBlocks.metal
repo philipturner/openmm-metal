@@ -32,6 +32,11 @@ __kernel void findBlockBounds(int numAtoms, real4 periodicBoxSize, real4 invPeri
         center.w = 0;
         for (int i = base; i < last; i++) {
             pos = posq[i];
+#ifdef USE_GHOST_ATOMS
+            if (isnan(pos.x)) {
+                continue;
+            }
+#endif
             real3 delta = posq[i]-center.xyz;
 #ifdef USE_PERIODIC
             APPLY_PERIODIC_TO_DELTA(delta)
@@ -96,7 +101,16 @@ __kernel void sortBoxData(__global const real2* restrict sortedBlock, __global c
 
     bool rebuild = forceRebuild;
     for (int i = get_global_id(0); i < NUM_ATOMS; i += get_global_size(0)) {
-        real3 delta = oldPositions[i]-posq[i];
+        // Note about ghost atoms: NAN propagation should theoretically make any
+        // boolean expression return 'false'. This line may be unnecessary.
+        real3 posq_i = posq[i];
+        real3 oldPositions_i = oldPositions[i];
+#ifdef USE_GHOST_ATOMS
+        if (isnan(posq_i.x)) {
+            continue;
+        }
+#endif
+        real3 delta = oldPositions_i-posq_i;
         if (delta.x*delta.x + delta.y*delta.y + delta.z*delta.z > 0.25f*PADDING*PADDING)
             rebuild = true;
     }
@@ -153,6 +167,21 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
         real3 blockSizeX = real3(vloada_half3(block1, sortedBlockBoundingBox));
         int neighborsInBuffer = 0;
         real3 pos1 = posq[x*TILE_SIZE+indexInWarp].xyz;
+#ifdef USE_GHOST_ATOMS
+        {
+          int x_is_nan = isnan(pos1.x);
+          if (simd_ballot(x_is_nan).x) {
+            float valid_x = simd_broadcast_first(pos1.x);
+            float valid_y = simd_broadcast_first(pos1.y);
+            float valid_z = simd_broadcast_first(pos1.z);
+            if (x_is_nan) {
+              pos1.x = valid_x;
+              pos1.y = valid_y;
+              pos1.z = valid_z;
+            }
+          }
+        }
+#endif
 #ifdef USE_PERIODIC
         const bool singlePeriodicCopy = (0.5f*periodicBoxSize.x-blockSizeX.x >= PADDED_CUTOFF &&
                                          0.5f*periodicBoxSize.y-blockSizeX.y >= PADDED_CUTOFF &&
@@ -279,6 +308,21 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
 
                     int atom2 = y*TILE_SIZE+indexInWarp;
                     real3 pos2 = posq[atom2].xyz;
+#ifdef USE_GHOST_ATOMS
+                    {
+                      int x_is_nan = isnan(pos2.x);
+                      if (simd_ballot(x_is_nan).x) {
+                        float valid_x = simd_broadcast_first(pos2.x);
+                        float valid_y = simd_broadcast_first(pos2.y);
+                        float valid_z = simd_broadcast_first(pos2.z);
+                        if (x_is_nan) {
+                          pos2.x = valid_x;
+                          pos2.y = valid_y;
+                          pos2.z = valid_z;
+                        }
+                      }
+                    }
+#endif
 #ifdef USE_PERIODIC
                     if (singlePeriodicCopy)
                         APPLY_PERIODIC_TO_POS_WITH_CENTER(pos2, blockCenterX)
@@ -312,10 +356,6 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
                         else {
 #endif
 #ifdef VENDOR_APPLE
-                            // The matrix multiplication optimization doesn't
-                            // help right now. Perhaps it will after switching
-                            // over a lot of the threadgroup-heavy setup work
-                            // to SIMD-scoped operations.
                             #define __findBlocksWithInteractions_loop1(j) \
                             { \
                                 real3 delta = pos2-posBuffer[warpStart+j];\

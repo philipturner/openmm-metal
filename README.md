@@ -131,8 +131,8 @@ At the several million atom range, OpenMM starts to experience $O(n^2)$ scaling.
 ```
 export OPENMM_METAL_USE_LARGE_BLOCKS=0 # accepted, force-disables large blocks
 export OPENMM_METAL_USE_LARGE_BLOCKS=1 # accepted, forces usage of large blocks
-export OPENMM_METAL_USE_NEIGHBOR_LIST=2 # runtime crash
-unset OPENMM_METAL_USE_NEIGHBOR_LIST # accepted, uses large blocks
+export OPENMM_METAL_USE_LARGE_BLOCKS=2 # runtime crash
+unset OPENMM_METAL_USE_LARGE_BLOCKS # accepted, uses large blocks
 ```
 
 Scaling behavior (Water Box, Amber Forcefield, PME):
@@ -146,6 +146,17 @@ Water Box Sizes | Atoms | s/100K/500 (32-blocks) | s/100K/500 (1024-blocks) |
 20.0 nm | 792450 | 2.03 | 1.92
 25.0 nm | 1550160 | 2.35 | 2.09
 30.0 nm | 2682600 | 2.61 | 2.32
+
+### Ghost Atoms
+
+TODO: Document this feature.
+
+```
+export OPENMM_METAL_USE_GHOST_ATOMS=0 # accepted, does not recognize ghost atoms
+export OPENMM_METAL_USE_GHOST_ATOMS=1 # accepted, recognizes ghost atoms
+export OPENMM_METAL_USE_GHOST_ATOMS=2 # runtime crash
+unset OPENMM_METAL_USE_GHOST_ATOMS # accepted, does not recognize ghost atoms
+```
 
 ## Testing
 
