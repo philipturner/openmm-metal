@@ -259,12 +259,6 @@ __kernel void computeNonbonded(
             unsigned int j = y*TILE_SIZE + tgx;
 #endif
             atomIndices[get_local_id(0)] = j;
-#ifdef USE_GHOST_ATOMS
-            int atomIsValid = (ghostAtomsMask[j] == 0);
-            int numValidAtoms = popcount(sub_group_ballot(atomIsValid).x);
-#else
-#define numValidAtoms TILE_SIZE
-#endif
             if (j < PADDED_NUM_ATOMS) {
                 real4 tempPosq = posq[j];
                 localData[localAtomIndex].x = tempPosq.x;
@@ -282,6 +276,13 @@ __kernel void computeNonbonded(
                 localData[localAtomIndex].z = 0;
                 CLEAR_LOCAL_PARAMETERS
             }
+          
+#ifdef USE_GHOST_ATOMS
+          if (ghostAtomsMask[j] != 0) {
+            localData[localAtomIndex].x = FLT_MAX;
+          }
+#endif
+          
             SYNC_WARPS;
 #ifdef USE_PERIODIC
             if (singlePeriodicCopy) {
@@ -345,9 +346,14 @@ __kernel void computeNonbonded(
                 // We need to apply periodic boundary conditions separately for each interaction.
 
                 unsigned int tj = tgx;
-                for (j = 0; j < numValidAtoms; j++) {
+                for (j = 0; j < TILE_SIZE; j++) {
                     int atom2 = tbx+tj;
                     real4 posq2 = (real4) (localData[atom2].x, localData[atom2].y, localData[atom2].z, localData[atom2].q);
+#ifdef USE_GHOST_ATOMS
+                  if (posq2.x == FLT_MAX) {
+                    continue;
+                  }
+#endif
                     real4 delta = (real4) (posq2.xyz - posq1.xyz, 0);
 #ifdef USE_PERIODIC
                     APPLY_PERIODIC_TO_DELTA(delta)
