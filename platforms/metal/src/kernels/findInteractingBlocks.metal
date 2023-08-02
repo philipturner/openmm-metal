@@ -6,7 +6,11 @@
  */
 __kernel void findBlockBounds(int numAtoms, real4 periodicBoxSize, real4 invPeriodicBoxSize, real4 periodicBoxVecX, real4 periodicBoxVecY, real4 periodicBoxVecZ,
         __global const real3* restrict posq, __global real4* restrict blockCenter, __global real3* restrict blockBoundingBox, __global int* restrict rebuildNeighborList,
-        __global real2* restrict sortedBlocks) {
+        __global real2* restrict sortedBlocks
+#ifdef USE_GHOST_ATOMS
+        , __global char* restrict ghostAtomsMask
+#endif
+                              ) {
     int index = get_global_id(0);
     int base = index*TILE_SIZE;
     while (base < numAtoms) {
@@ -31,12 +35,12 @@ __kernel void findBlockBounds(int numAtoms, real4 periodicBoxSize, real4 invPeri
         center.xyz = 0.5f*(maxPos+minPos);
         center.w = 0;
         for (int i = base; i < last; i++) {
-            pos = posq[i];
 #ifdef USE_GHOST_ATOMS
-            if (isnan(pos.x)) {
+            if (ghostAtomsMask[i] != 0) {
                 continue;
             }
 #endif
+            pos = posq[i];
             real3 delta = posq[i]-center.xyz;
 #ifdef USE_PERIODIC
             APPLY_PERIODIC_TO_DELTA(delta)
@@ -61,6 +65,9 @@ __kernel void sortBoxData(__global const real2* restrict sortedBlock, __global c
         __global const real3* restrict blockBoundingBox, __global real4* restrict sortedBlockCenter,
         __global half* restrict sortedBlockBoundingBox, __global const real3* restrict posq, __global const real3* restrict oldPositions,
         __global unsigned int* restrict interactionCount, __global int* restrict rebuildNeighborList, int forceRebuild
+#ifdef USE_GHOST_ATOMS
+        , __global char* restrict ghostAtomsMask
+#endif
 #ifdef USE_LARGE_BLOCKS
         , __global real4* restrict largeBlockCenter, __global half* restrict largeBlockBoundingBox, real4 periodicBoxSize,
         real4 invPeriodicBoxSize, real4 periodicBoxVecX, real4 periodicBoxVecY, real4 periodicBoxVecZ
@@ -101,15 +108,13 @@ __kernel void sortBoxData(__global const real2* restrict sortedBlock, __global c
 
     bool rebuild = forceRebuild;
     for (int i = get_global_id(0); i < NUM_ATOMS; i += get_global_size(0)) {
-        // Note about ghost atoms: NAN propagation should theoretically make any
-        // boolean expression return 'false'. This line may be unnecessary.
-        real3 posq_i = posq[i];
-        real3 oldPositions_i = oldPositions[i];
 #ifdef USE_GHOST_ATOMS
-        if (isnan(posq_i.x)) {
+        if (ghostAtomsMask[i] != 0) {
             continue;
         }
 #endif
+        real3 posq_i = posq[i];
+        real3 oldPositions_i = oldPositions[i];
         real3 delta = oldPositions_i-posq_i;
         if (delta.x*delta.x + delta.y*delta.y + delta.z*delta.z > 0.25f*PADDING*PADDING)
             rebuild = true;
@@ -132,6 +137,9 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
         __global const int* restrict rebuildNeighborList
 #ifdef USE_LARGE_BLOCKS
         , __global real4* restrict largeBlockCenter, __global real4* restrict largeBlockBoundingBox
+#endif
+#ifdef USE_GHOST_ATOMS
+        , __global char* restrict ghostAtomsMask
 #endif
         ) {
 
@@ -169,12 +177,12 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
         real3 pos1 = posq[x*TILE_SIZE+indexInWarp].xyz;
 #ifdef USE_GHOST_ATOMS
         {
-          int x_is_nan = isnan(pos1.x);
-          if (simd_ballot(x_is_nan).x) {
+          int atomValid = ghostAtomsMask[x*TILE_SIZE+indexInWarp] == 0;
+          if (sub_group_ballot(!atomValid).x) {
             float valid_x = simd_broadcast_first(pos1.x);
             float valid_y = simd_broadcast_first(pos1.y);
             float valid_z = simd_broadcast_first(pos1.z);
-            if (x_is_nan) {
+            if (!atomValid) {
               pos1.x = valid_x;
               pos1.y = valid_y;
               pos1.z = valid_z;
@@ -310,15 +318,15 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
                     real3 pos2 = posq[atom2].xyz;
 #ifdef USE_GHOST_ATOMS
                     {
-                      int x_is_nan = isnan(pos2.x);
-                      if (simd_ballot(x_is_nan).x) {
-                        float valid_x = simd_broadcast_first(pos2.x);
-                        float valid_y = simd_broadcast_first(pos2.y);
-                        float valid_z = simd_broadcast_first(pos2.z);
-                        if (x_is_nan) {
-                          pos2.x = valid_x;
-                          pos2.y = valid_y;
-                          pos2.z = valid_z;
+                      int atomValid = ghostAtomsMask[atom2] == 0;
+                      if (sub_group_ballot(!atomValid).x) {
+                        float valid_x = simd_broadcast_first(pos1.x);
+                        float valid_y = simd_broadcast_first(pos1.y);
+                        float valid_z = simd_broadcast_first(pos1.z);
+                        if (!atomValid) {
+                          pos1.x = valid_x;
+                          pos1.y = valid_y;
+                          pos1.z = valid_z;
                         }
                       }
                     }

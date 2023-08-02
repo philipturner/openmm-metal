@@ -22,6 +22,9 @@ __kernel void computeNonbonded(
         real4 periodicBoxVecX, real4 periodicBoxVecY, real4 periodicBoxVecZ, unsigned int maxTiles, __global const real4* restrict blockCenter,
         __global const real4* restrict blockSize, __global const int* restrict interactingAtoms
 #endif
+#ifdef USE_GHOST_ATOMS
+        , __global char* restrict ghostAtomsMask
+#endif
         PARAMETER_ARGUMENTS) {
     const unsigned int totalWarps = get_global_size(0)/TILE_SIZE;
     const unsigned int warp = get_global_id(0)/TILE_SIZE;
@@ -256,6 +259,12 @@ __kernel void computeNonbonded(
             unsigned int j = y*TILE_SIZE + tgx;
 #endif
             atomIndices[get_local_id(0)] = j;
+#ifdef USE_GHOST_ATOMS
+            int atomIsValid = (ghostAtomsMask[j] == 0);
+            int numValidAtoms = popcount(sub_group_ballot(atomIsValid).x);
+#else
+#define numValidAtoms TILE_SIZE
+#endif
             if (j < PADDED_NUM_ATOMS) {
                 real4 tempPosq = posq[j];
                 localData[localAtomIndex].x = tempPosq.x;
@@ -336,14 +345,9 @@ __kernel void computeNonbonded(
                 // We need to apply periodic boundary conditions separately for each interaction.
 
                 unsigned int tj = tgx;
-                for (j = 0; j < TILE_SIZE; j++) {
+                for (j = 0; j < numValidAtoms; j++) {
                     int atom2 = tbx+tj;
                     real4 posq2 = (real4) (localData[atom2].x, localData[atom2].y, localData[atom2].z, localData[atom2].q);
-#ifdef USE_GHOST_ATOMS
-                    if (isnan(posq2.x)) {
-                        continue;
-                    }
-#endif
                     real4 delta = (real4) (posq2.xyz - posq1.xyz, 0);
 #ifdef USE_PERIODIC
                     APPLY_PERIODIC_TO_DELTA(delta)
