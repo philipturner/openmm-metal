@@ -268,7 +268,6 @@ void MetalNonbondedUtilities::initialize(const System& system) {
         (vendor.size() >= 3 && vendor.substr(0, 3) == "AMD") ||
         (vendor.size() >= 28 && vendor.substr(0, 28) == "Advanced Micro Devices, Inc."))
     {
-        // TODO: Find a better heuristic - where is the actual cutoff? Also eliminate #CUs as a confounding variable.
         if (context.getNumAtoms() < 10000)
             numForceThreadBlocks /= 4;
         else if (context.getNumAtoms() < 20000)
@@ -278,7 +277,6 @@ void MetalNonbondedUtilities::initialize(const System& system) {
     if (context.getSIMDWidth() == 32 &&
         (vendor.size() >= 5 && vendor.substr(0, 5) == "Apple"))
     {
-        // TODO: Find a better heuristic - where is the actual cutoff? Also eliminate #cores as a confounding variable.
         if (context.getNumAtoms() < 10000)
             numForceThreadBlocks /= 2;
     }
@@ -368,11 +366,10 @@ void MetalNonbondedUtilities::initialize(const System& system) {
 
     // Create data structures for the neighbor list.
 
-  int numAtoms = context.getNumAtoms();
     if (useCutoff) {
         // Select a size for the arrays that hold the neighbor list.  We have to make a fairly
         // arbitrary guess, but if this turns out to be too small we'll increase it later.
-
+        int numAtoms = context.getNumAtoms();
         int maxTiles = 20*numAtomBlocks;
         if (maxTiles > numTiles)
             maxTiles = numTiles;
@@ -396,64 +393,6 @@ void MetalNonbondedUtilities::initialize(const System& system) {
         vector<cl_uint> count(1, 0);
         interactionCount.upload(count);
         rebuildNeighborList.upload(count);
-    }
-  
-    int zeroInitialized = false;
-    if (useGhostAtoms) {
-      const char *zeroMask = getenv("OPENMM_METAL_GHOST_ATOMS_ZERO_MASK");
-      if (zeroMask) {
-        zeroInitialized = true;
-        vector<cl_char> maskVector;
-        int paddedNumAtoms = (numAtoms + 31) / 32 * 32;
-        for (int i = 0; i < paddedNumAtoms; ++i) {
-          maskVector.push_back(0);
-        }
-        ghostAtomsMask.initialize<cl_char>(context, paddedNumAtoms, "ghostAtomsMask");
-        ghostAtomsMask.upload(maskVector);
-      }
-    }
-  
-    if (useGhostAtoms && !zeroInitialized) {
-      if (numAtoms % 32 != 0) {
-        std::cout << std::endl;
-        std::cout << METAL_LOG_HEADER << "Atom count not divisible by 32." << std::endl;
-        std::cout << METAL_LOG_HEADER << "Atom count: " << numAtoms << std::endl;
-        std::cout << METAL_LOG_HEADER << "Quitting now." << std::endl;
-        exit(7);
-      }
-      const char *mask = getenv("OPENMM_METAL_GHOST_ATOMS_MASK");
-      if (!mask) {
-        std::cout << std::endl;
-        std::cout << METAL_LOG_HEADER << "No atoms mask specified." << std::endl;
-        std::cout << METAL_LOG_HEADER << "Quitting now." << std::endl;
-        exit(7);
-      }
-      std::string maskString(mask);
-      if (maskString.size() != numAtoms) {
-        std::cout << std::endl;
-        std::cout << METAL_LOG_HEADER << "Invalid atoms mask.";
-        std::cout << METAL_LOG_HEADER << "Got count " << maskString.size() << ", but expected " << numAtoms << "." << std::endl;
-        std::cout << METAL_LOG_HEADER << "Quitting now." << std::endl;
-        exit(7);
-      }
-      vector<cl_char> maskVector;
-      for (int i = 0; i < numAtoms; ++i) {
-        cl_char output;
-        if (maskString[i] == '1') {
-          output = 0;
-        } else if (maskString[i] == '2') {
-          output = 1;
-        } else {
-          std::cout << std::endl;
-          std::cout << METAL_LOG_HEADER << "Invalid atoms mask.";
-          std::cout << METAL_LOG_HEADER << "Got character " << int(maskString[i]) << "(" << char(maskString[i]) << ") at index " << i << "." << std::endl;
-          std::cout << METAL_LOG_HEADER << "Quitting now." << std::endl;
-          exit(7);
-        }
-        maskVector.push_back(output);
-      }
-      ghostAtomsMask.initialize<cl_char>(context, numAtoms, "ghostAtomsMask");
-      ghostAtomsMask.upload(maskVector);
     }
 }
 
@@ -510,7 +449,7 @@ void MetalNonbondedUtilities::prepareInteractions(int forceGroups) {
     setPeriodicBoxArgs(context, kernels.findBlockBoundsKernel, 1);
     context.executeKernel(kernels.findBlockBoundsKernel, context.getNumAtoms());
   if (useLargeBlocks) {
-    setPeriodicBoxArgs(context, kernels.sortBoxDataKernel, useGhostAtoms ? 13 : 12);
+    setPeriodicBoxArgs(context, kernels.sortBoxDataKernel, 12);
   } else {
     blockSorter->sort(sortedBlocks);
   }
@@ -679,10 +618,6 @@ void MetalNonbondedUtilities::createKernelsForGroups(int groups) {
             kernels.findBlockBoundsKernel.setArg<cl::Buffer>(8, blockBoundingBox.getDeviceBuffer());
             kernels.findBlockBoundsKernel.setArg<cl::Buffer>(9, rebuildNeighborList.getDeviceBuffer());
             kernels.findBlockBoundsKernel.setArg<cl::Buffer>(10, sortedBlocks.getDeviceBuffer());
-          if (useGhostAtoms) {
-            int maxBoundIndex = 10;
-            kernels.findBlockBoundsKernel.setArg<cl::Buffer>(maxBoundIndex + 1, ghostAtomsMask.getDeviceBuffer());
-          }
           
             kernels.sortBoxDataKernel = cl::Kernel(interactingBlocksProgram, "sortBoxData");
             kernels.sortBoxDataKernel.setArg<cl::Buffer>(0, sortedBlocks.getDeviceBuffer());
@@ -695,19 +630,10 @@ void MetalNonbondedUtilities::createKernelsForGroups(int groups) {
             kernels.sortBoxDataKernel.setArg<cl::Buffer>(7, interactionCount.getDeviceBuffer());
             kernels.sortBoxDataKernel.setArg<cl::Buffer>(8, rebuildNeighborList.getDeviceBuffer());
             kernels.sortBoxDataKernel.setArg<cl_int>(9, true);
-          
-          {
-            int maxBoundIndex = 9;
-            if (useGhostAtoms) {
-              kernels.sortBoxDataKernel.setArg<cl::Buffer>(10, ghostAtomsMask.getDeviceBuffer());
-              maxBoundIndex = 10;
-            }
             if (useLargeBlocks) {
-              kernels.sortBoxDataKernel.setArg<cl::Buffer>(maxBoundIndex + 1, largeBlockCenter.getDeviceBuffer());
-              kernels.sortBoxDataKernel.setArg<cl::Buffer>(maxBoundIndex + 2, largeBlockBoundingBox.getDeviceBuffer());
+              kernels.sortBoxDataKernel.setArg<cl::Buffer>(10, largeBlockCenter.getDeviceBuffer());
+              kernels.sortBoxDataKernel.setArg<cl::Buffer>(11, largeBlockBoundingBox.getDeviceBuffer());
             }
-            
-          }
           
             kernels.findInteractingBlocksKernel = cl::Kernel(interactingBlocksProgram, "findBlocksWithInteractions");
             kernels.findInteractingBlocksKernel.setArg<cl::Buffer>(5, interactionCount.getDeviceBuffer());
@@ -724,18 +650,11 @@ void MetalNonbondedUtilities::createKernelsForGroups(int groups) {
             kernels.findInteractingBlocksKernel.setArg<cl::Buffer>(16, exclusionRowIndices.getDeviceBuffer());
             kernels.findInteractingBlocksKernel.setArg<cl::Buffer>(17, oldPositions.getDeviceBuffer());
             kernels.findInteractingBlocksKernel.setArg<cl::Buffer>(18, rebuildNeighborList.getDeviceBuffer());
-          {
-            int maxBoundIndex = 18;
-            
             if (useLargeBlocks) {
               kernels.findInteractingBlocksKernel.setArg<cl::Buffer>(19, largeBlockCenter.getDeviceBuffer());
               kernels.findInteractingBlocksKernel.setArg<cl::Buffer>(20, largeBlockBoundingBox.getDeviceBuffer());
-              maxBoundIndex = 20;
             }
-            if (useGhostAtoms) {
-              kernels.findInteractingBlocksKernel.setArg<cl::Buffer>(maxBoundIndex + 1, ghostAtomsMask.getDeviceBuffer());
-            }
-          }
+          
             if (kernels.findInteractingBlocksKernel.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(context.getDevice()) < groupSize) {
                 // The device can't handle this block size, so reduce it.
 
@@ -939,9 +858,6 @@ cl::Kernel MetalNonbondedUtilities::createInteractionKernel(const string& source
         kernel.setArg<cl::Buffer>(index++, blockBoundingBox.getDeviceBuffer());
         kernel.setArg<cl::Buffer>(index++, interactingAtoms.getDeviceBuffer());
     }
-  if (useGhostAtoms) {
-    kernel.setArg<cl::Buffer>(index++, ghostAtomsMask.getDeviceBuffer());
-  }
     for (const ParameterInfo& param : params)
         kernel.setArg<cl::Memory>(index++, param.getMemory());
     for (const ParameterInfo& arg : arguments)

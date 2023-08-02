@@ -6,11 +6,7 @@
  */
 __kernel void findBlockBounds(int numAtoms, real4 periodicBoxSize, real4 invPeriodicBoxSize, real4 periodicBoxVecX, real4 periodicBoxVecY, real4 periodicBoxVecZ,
         __global const real3* restrict posq, __global real4* restrict blockCenter, __global real3* restrict blockBoundingBox, __global int* restrict rebuildNeighborList,
-        __global real2* restrict sortedBlocks
-#ifdef USE_GHOST_ATOMS
-        , __global char* restrict ghostAtomsMask
-#endif
-                              ) {
+        __global real2* restrict sortedBlocks) {
     int index = get_global_id(0);
     int base = index*TILE_SIZE;
     while (base < numAtoms) {
@@ -35,17 +31,17 @@ __kernel void findBlockBounds(int numAtoms, real4 periodicBoxSize, real4 invPeri
         center.xyz = 0.5f*(maxPos+minPos);
         center.w = 0;
         for (int i = base; i < last; i++) {
+          pos = posq[i];
 #ifdef USE_GHOST_ATOMS
-            if (ghostAtomsMask[i] != 0) {
-                continue;
-            }
+          if (!isnan(pos.x))
 #endif
-            pos = posq[i];
+          {
             real3 delta = posq[i]-center.xyz;
 #ifdef USE_PERIODIC
             APPLY_PERIODIC_TO_DELTA(delta)
 #endif
             center.w = max(center.w, delta.x*delta.x+delta.y*delta.y+delta.z*delta.z);
+          }
         }
         center.w = sqrt(center.w);
         blockBoundingBox[index] = blockSize;
@@ -65,9 +61,6 @@ __kernel void sortBoxData(__global const real2* restrict sortedBlock, __global c
         __global const real3* restrict blockBoundingBox, __global real4* restrict sortedBlockCenter,
         __global half* restrict sortedBlockBoundingBox, __global const real3* restrict posq, __global const real3* restrict oldPositions,
         __global unsigned int* restrict interactionCount, __global int* restrict rebuildNeighborList, int forceRebuild
-#ifdef USE_GHOST_ATOMS
-        , __global char* restrict ghostAtomsMask
-#endif
 #ifdef USE_LARGE_BLOCKS
         , __global real4* restrict largeBlockCenter, __global half* restrict largeBlockBoundingBox, real4 periodicBoxSize,
         real4 invPeriodicBoxSize, real4 periodicBoxVecX, real4 periodicBoxVecY, real4 periodicBoxVecZ
@@ -108,16 +101,16 @@ __kernel void sortBoxData(__global const real2* restrict sortedBlock, __global c
 
     bool rebuild = forceRebuild;
     for (int i = get_global_id(0); i < NUM_ATOMS; i += get_global_size(0)) {
+      real3 posq_i = posq[i];
+      real3 oldPositions_i = oldPositions[i];
 #ifdef USE_GHOST_ATOMS
-        if (ghostAtomsMask[i] != 0) {
-            continue;
-        }
+      if (!isnan(posq_i.x))
 #endif
-        real3 posq_i = posq[i];
-        real3 oldPositions_i = oldPositions[i];
+      {
         real3 delta = oldPositions_i-posq_i;
         if (delta.x*delta.x + delta.y*delta.y + delta.z*delta.z > 0.25f*PADDING*PADDING)
-            rebuild = true;
+          rebuild = true;
+      }
     }
     if (rebuild) {
         rebuildNeighborList[0] = 1;
@@ -137,9 +130,6 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
         __global const int* restrict rebuildNeighborList
 #ifdef USE_LARGE_BLOCKS
         , __global real4* restrict largeBlockCenter, __global real4* restrict largeBlockBoundingBox
-#endif
-#ifdef USE_GHOST_ATOMS
-        , __global char* restrict ghostAtomsMask
 #endif
         ) {
 
@@ -177,12 +167,11 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
         real3 pos1 = posq[x*TILE_SIZE+indexInWarp].xyz;
 #ifdef USE_GHOST_ATOMS
         {
-          int atomValid = ghostAtomsMask[x*TILE_SIZE+indexInWarp] == 0;
-          if (sub_group_ballot(!atomValid).x) {
+          if (sub_group_ballot(isnan(pos1.x)).x) {
             float valid_x = simd_broadcast_first(pos1.x);
             float valid_y = simd_broadcast_first(pos1.y);
             float valid_z = simd_broadcast_first(pos1.z);
-            if (!atomValid) {
+            if (isnan(pos1.x)) {
               pos1.x = valid_x;
               pos1.y = valid_y;
               pos1.z = valid_z;
@@ -316,21 +305,6 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
 
                     int atom2 = y*TILE_SIZE+indexInWarp;
                     real3 pos2 = posq[atom2].xyz;
-#ifdef USE_GHOST_ATOMS
-                    {
-                      int atomValid = ghostAtomsMask[atom2] == 0;
-                      if (sub_group_ballot(!atomValid).x) {
-                        float valid_x = simd_broadcast_first(pos1.x);
-                        float valid_y = simd_broadcast_first(pos1.y);
-                        float valid_z = simd_broadcast_first(pos1.z);
-                        if (!atomValid) {
-                          pos1.x = valid_x;
-                          pos1.y = valid_y;
-                          pos1.z = valid_z;
-                        }
-                      }
-                    }
-#endif
 #ifdef USE_PERIODIC
                     if (singlePeriodicCopy)
                         APPLY_PERIODIC_TO_POS_WITH_CENTER(pos2, blockCenterX)
@@ -347,41 +321,46 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
 #else
                     if (atom2 < NUM_ATOMS) {
 #endif
+#ifdef USE_GHOST_ATOMS
+                  if (!isnan(pos2.x))
+#endif
+                  {
 #ifdef USE_PERIODIC
-                        if (!singlePeriodicCopy) {
-  #ifdef VENDOR_APPLE
-                            int first = ctz(atomFlags) % 32;
-                            int last = 32 - clz(atomFlags);
-                            for (int j = first; j < last; j++) {
-  #else
-                            for (int j = 0; j < TILE_SIZE; j++) {
-  #endif
-                                real3 delta = pos2.xyz-posBuffer[warpStart+j].xyz;
-                                APPLY_PERIODIC_TO_DELTA(delta)
-                                interacts |= (delta.x*delta.x+delta.y*delta.y+delta.z*delta.z < PADDED_CUTOFF_SQUARED);
-                            }
+                    if (!singlePeriodicCopy) {
+#ifdef VENDOR_APPLE
+                      int first = ctz(atomFlags) % 32;
+                      int last = 32 - clz(atomFlags);
+                      for (int j = first; j < last; j++) {
+#else
+                        for (int j = 0; j < TILE_SIZE; j++) {
+#endif
+                          real3 delta = pos2.xyz-posBuffer[warpStart+j].xyz;
+                          APPLY_PERIODIC_TO_DELTA(delta)
+                          interacts |= (delta.x*delta.x+delta.y*delta.y+delta.z*delta.z < PADDED_CUTOFF_SQUARED);
                         }
-                        else {
+                      }
+                      else {
 #endif
 #ifdef VENDOR_APPLE
-                            #define __findBlocksWithInteractions_loop1(j) \
-                            { \
-                                real3 delta = pos2-posBuffer[warpStart+j];\
-                                interacts |= (delta.x*delta.x+delta.y*delta.y+delta.z*delta.z < PADDED_CUTOFF_SQUARED);\
-                            } \
+#define __findBlocksWithInteractions_loop1(j) \
+{ \
+real3 delta = pos2-posBuffer[warpStart+j];\
+interacts |= (delta.x*delta.x+delta.y*delta.y+delta.z*delta.z < PADDED_CUTOFF_SQUARED);\
+} \
 
-                            FORCE_UNROLL_32(__findBlocksWithInteractions_loop1)
-                            #undef __findBlocksWithInteractions_loop1
+                        FORCE_UNROLL_32(__findBlocksWithInteractions_loop1)
+#undef __findBlocksWithInteractions_loop1
 #else
-                            for (int j = 0; j < TILE_SIZE; j++) {
-                                real3 delta = pos2-posBuffer[warpStart+j];
-                                interacts |= (delta.x*delta.x+delta.y*delta.y+delta.z*delta.z < PADDED_CUTOFF_SQUARED);
-                            }
-#endif
-#ifdef USE_PERIODIC
+                        for (int j = 0; j < TILE_SIZE; j++) {
+                          real3 delta = pos2-posBuffer[warpStart+j];
+                          interacts |= (delta.x*delta.x+delta.y*delta.y+delta.z*delta.z < PADDED_CUTOFF_SQUARED);
                         }
 #endif
+#ifdef USE_PERIODIC
+                      }
+#endif
                     }
+                  }
                     
                     // Do a prefix sum to compact the list of atoms.
 #ifdef VENDOR_APPLE

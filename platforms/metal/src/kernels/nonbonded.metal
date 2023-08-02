@@ -22,9 +22,6 @@ __kernel void computeNonbonded(
         real4 periodicBoxVecX, real4 periodicBoxVecY, real4 periodicBoxVecZ, unsigned int maxTiles, __global const real4* restrict blockCenter,
         __global const real4* restrict blockSize, __global const int* restrict interactingAtoms
 #endif
-#ifdef USE_GHOST_ATOMS
-        , __global char* restrict ghostAtomsMask
-#endif
         PARAMETER_ARGUMENTS) {
     const unsigned int totalWarps = get_global_size(0)/TILE_SIZE;
     const unsigned int warp = get_global_id(0)/TILE_SIZE;
@@ -277,12 +274,6 @@ __kernel void computeNonbonded(
                 CLEAR_LOCAL_PARAMETERS
             }
           
-#ifdef USE_GHOST_ATOMS
-          if (ghostAtomsMask[j] != 0) {
-            localData[localAtomIndex].x = FLT_MAX;
-          }
-#endif
-          
             SYNC_WARPS;
 #ifdef USE_PERIODIC
             if (singlePeriodicCopy) {
@@ -350,10 +341,9 @@ __kernel void computeNonbonded(
                     int atom2 = tbx+tj;
                     real4 posq2 = (real4) (localData[atom2].x, localData[atom2].y, localData[atom2].z, localData[atom2].q);
 #ifdef USE_GHOST_ATOMS
-                  if (posq2.x == FLT_MAX) {
-                    continue;
-                  }
+                  if (!isnan(posq2.x))
 #endif
+                  {
                     real4 delta = (real4) (posq2.xyz - posq1.xyz, 0);
 #ifdef USE_PERIODIC
                     APPLY_PERIODIC_TO_DELTA(delta)
@@ -362,40 +352,41 @@ __kernel void computeNonbonded(
 #ifdef PRUNE_BY_CUTOFF
                     if (r2 < MAX_CUTOFF*MAX_CUTOFF) {
 #endif
-                        real invR = RSQRT(r2);
-                        real r = r2*invR;
-                        LOAD_ATOM2_PARAMETERS
-                        atom2 = atomIndices[tbx+tj];
+                      real invR = RSQRT(r2);
+                      real r = r2*invR;
+                      LOAD_ATOM2_PARAMETERS
+                      atom2 = atomIndices[tbx+tj];
 #ifdef USE_SYMMETRIC
-                        real dEdR = 0;
+                      real dEdR = 0;
 #else
-                        real4 dEdR1 = (real4) 0;
-                        real4 dEdR2 = (real4) 0;
+                      real4 dEdR1 = (real4) 0;
+                      real4 dEdR2 = (real4) 0;
 #endif
 #ifdef USE_EXCLUSIONS
-                        bool isExcluded = (atom1 >= NUM_ATOMS || atom2 >= NUM_ATOMS);
+                      bool isExcluded = (atom1 >= NUM_ATOMS || atom2 >= NUM_ATOMS);
 #endif
-                        real tempEnergy = 0;
-                        const real interactionScale = 1.0f;
-                        COMPUTE_INTERACTION
-                        energy += tempEnergy;
+                      real tempEnergy = 0;
+                      const real interactionScale = 1.0f;
+                      COMPUTE_INTERACTION
+                      energy += tempEnergy;
 #ifdef INCLUDE_FORCES
 #ifdef USE_SYMMETRIC
-                        delta.xyz *= dEdR;
-                        force.xyz -= delta.xyz;
-                        localData[tbx+tj].fx += delta.x;
-                        localData[tbx+tj].fy += delta.y;
-                        localData[tbx+tj].fz += delta.z;
+                      delta.xyz *= dEdR;
+                      force.xyz -= delta.xyz;
+                      localData[tbx+tj].fx += delta.x;
+                      localData[tbx+tj].fy += delta.y;
+                      localData[tbx+tj].fz += delta.z;
 #else
-                        force.xyz -= dEdR1.xyz;
-                        localData[tbx+tj].fx += dEdR2.x;
-                        localData[tbx+tj].fy += dEdR2.y;
-                        localData[tbx+tj].fz += dEdR2.z;
+                      force.xyz -= dEdR1.xyz;
+                      localData[tbx+tj].fx += dEdR2.x;
+                      localData[tbx+tj].fy += dEdR2.y;
+                      localData[tbx+tj].fz += dEdR2.z;
 #endif
 #endif
 #ifdef PRUNE_BY_CUTOFF
                     }
 #endif
+                  }
                     tj = (tj + 1) & (TILE_SIZE - 1);
                     SYNC_WARPS;
                 }
