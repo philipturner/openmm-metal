@@ -31,17 +31,12 @@ __kernel void findBlockBounds(int numAtoms, real4 periodicBoxSize, real4 invPeri
         center.xyz = 0.5f*(maxPos+minPos);
         center.w = 0;
         for (int i = base; i < last; i++) {
-          pos = posq[i];
-#ifdef USE_GHOST_ATOMS
-          if (!isnan(pos.x))
-#endif
-          {
-            real3 delta = posq[i]-center.xyz;
+            pos = posq[i];
+					  real3 delta = pos-center.xyz;
 #ifdef USE_PERIODIC
             APPLY_PERIODIC_TO_DELTA(delta)
 #endif
             center.w = max(center.w, delta.x*delta.x+delta.y*delta.y+delta.z*delta.z);
-          }
         }
         center.w = sqrt(center.w);
         blockBoundingBox[index] = blockSize;
@@ -103,14 +98,9 @@ __kernel void sortBoxData(__global const real2* restrict sortedBlock, __global c
     for (int i = get_global_id(0); i < NUM_ATOMS; i += get_global_size(0)) {
       real3 posq_i = posq[i];
       real3 oldPositions_i = oldPositions[i];
-#ifdef USE_GHOST_ATOMS
-      if (!isnan(posq_i.x))
-#endif
-      {
-        real3 delta = oldPositions_i-posq_i;
-        if (delta.x*delta.x + delta.y*delta.y + delta.z*delta.z > 0.25f*PADDING*PADDING)
-          rebuild = true;
-      }
+			real3 delta = oldPositions_i-posq_i;
+			if (delta.x*delta.x + delta.y*delta.y + delta.z*delta.z > 0.25f*PADDING*PADDING)
+				rebuild = true;
     }
     if (rebuild) {
         rebuildNeighborList[0] = 1;
@@ -165,20 +155,7 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
         real3 blockSizeX = real3(vloada_half3(block1, sortedBlockBoundingBox));
         int neighborsInBuffer = 0;
         real3 pos1 = posq[x*TILE_SIZE+indexInWarp].xyz;
-#ifdef USE_GHOST_ATOMS
-        {
-          if (sub_group_ballot(isnan(pos1.x)).x) {
-            float valid_x = simd_broadcast_first(pos1.x);
-            float valid_y = simd_broadcast_first(pos1.y);
-            float valid_z = simd_broadcast_first(pos1.z);
-            if (isnan(pos1.x)) {
-              pos1.x = valid_x;
-              pos1.y = valid_y;
-              pos1.z = valid_z;
-            }
-          }
-        }
-#endif
+			
 #ifdef USE_PERIODIC
         const bool singlePeriodicCopy = (0.5f*periodicBoxSize.x-blockSizeX.x >= PADDED_CUTOFF &&
                                          0.5f*periodicBoxSize.y-blockSizeX.y >= PADDED_CUTOFF &&
@@ -321,10 +298,6 @@ __kernel void findBlocksWithInteractions(real4 periodicBoxSize, real4 invPeriodi
 #else
                     if (atom2 < NUM_ATOMS) {
 #endif
-#ifdef USE_GHOST_ATOMS
-                  if (!isnan(pos2.x))
-#endif
-                  {
 #ifdef USE_PERIODIC
                     if (!singlePeriodicCopy) {
 #ifdef VENDOR_APPLE
@@ -359,7 +332,6 @@ interacts |= (delta.x*delta.x+delta.y*delta.y+delta.z*delta.z < PADDED_CUTOFF_SQ
 #ifdef USE_PERIODIC
                       }
 #endif
-                    }
                   }
                     
                     // Do a prefix sum to compact the list of atoms.

@@ -147,17 +147,6 @@ Water Box Sizes | Atoms | s/100K/500 (32-blocks) | s/100K/500 (1024-blocks) |
 25.0 nm | 1550160 | 2.35 | 2.09
 30.0 nm | 2682600 | 2.61 | 2.32
 
-### Ghost Atoms
-
-TODO: Document this feature.
-
-```
-export OPENMM_METAL_USE_GHOST_ATOMS=0 # accepted, does not recognize ghost atoms
-export OPENMM_METAL_USE_GHOST_ATOMS=1 # accepted, recognizes ghost atoms
-export OPENMM_METAL_USE_GHOST_ATOMS=2 # runtime crash
-unset OPENMM_METAL_USE_GHOST_ATOMS # accepted, does not recognize ghost atoms
-```
-
 ## Testing
 
 <!--

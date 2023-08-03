@@ -340,10 +340,6 @@ __kernel void computeNonbonded(
                 for (j = 0; j < TILE_SIZE; j++) {
                     int atom2 = tbx+tj;
                     real4 posq2 = (real4) (localData[atom2].x, localData[atom2].y, localData[atom2].z, localData[atom2].q);
-#ifdef USE_GHOST_ATOMS
-                  if (!isnan(posq2.x))
-#endif
-                  {
                     real4 delta = (real4) (posq2.xyz - posq1.xyz, 0);
 #ifdef USE_PERIODIC
                     APPLY_PERIODIC_TO_DELTA(delta)
@@ -386,7 +382,6 @@ __kernel void computeNonbonded(
 #ifdef PRUNE_BY_CUTOFF
                     }
 #endif
-                  }
                     tj = (tj + 1) & (TILE_SIZE - 1);
                     SYNC_WARPS;
                 }

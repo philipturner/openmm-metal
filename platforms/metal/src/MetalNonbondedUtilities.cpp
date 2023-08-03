@@ -112,26 +112,6 @@ MetalNonbondedUtilities::MetalNonbondedUtilities(MetalContext& context) : contex
         }
       }
     }
-          
-    {
-      this->useGhostAtoms = false;
-      char *overrideUseGhostAtoms = getenv("OPENMM_METAL_USE_GHOST_ATOMS");
-      if (overrideUseGhostAtoms != nullptr) {
-        if (strcmp(overrideUseGhostAtoms, "0") == 0) {
-          this->useGhostAtoms = false;
-        } else if (strcmp(overrideUseGhostAtoms, "1") == 0) {
-          this->useGhostAtoms = true;
-        } else {
-          std::cout << std::endl;
-          std::cout << METAL_LOG_HEADER << "Error: Invalid option for ";
-          std::cout << "'OPENMM_METAL_USE_GHOST_ATOMS'." << std::endl;
-          std::cout << METAL_LOG_HEADER << "Specified '" << overrideUseGhostAtoms << "', but ";
-          std::cout << "expected either '0' or '1'." << std::endl;
-          std::cout << METAL_LOG_HEADER << "Quitting now." << std::endl;
-          exit(7);
-        }
-      }
-    }
     
     setKernelSource(deviceIsCpu ? MetalKernelSources::nonbonded_cpu : MetalKernelSources::nonbonded);
 }
@@ -602,8 +582,6 @@ void MetalNonbondedUtilities::createKernelsForGroups(int groups) {
             defines["TRICLINIC"] = "1";
         if (useLargeBlocks)
             defines["USE_LARGE_BLOCKS"] = "1";
-        if (useGhostAtoms)
-          defines["USE_GHOST_ATOMS"] = "1";
         defines["MAX_EXCLUSIONS"] = context.intToString(maxExclusions);
         defines["BUFFER_GROUPS"] = (deviceIsCpu ? "4" : "2");
         string file = (deviceIsCpu ? MetalKernelSources::findInteractingBlocks_cpu : MetalKernelSources::findInteractingBlocks);
@@ -803,8 +781,6 @@ cl::Kernel MetalNonbondedUtilities::createInteractionKernel(const string& source
         defines["USE_SYMMETRIC"] = "1";
     if (useNeighborList)
         defines["USE_NEIGHBOR_LIST"] = "1";
-    if (useGhostAtoms)
-        defines["USE_GHOST_ATOMS"] = "1";
     if (useCutoff && context.getSIMDWidth() < 32)
         defines["PRUNE_BY_CUTOFF"] = "1";
     if (includeForces)
