@@ -144,7 +144,14 @@ void MetalNonbondedUtilities::addInteraction(bool usesCutoff, bool usesPeriodic,
       if (strcmp(overrideUseList, "0") == 0) {
         this->useNeighborList = false;
       } else if (strcmp(overrideUseList, "1") == 0) {
-        this->useNeighborList = true;
+        if (useCutoff) {
+          this->useNeighborList = true;
+        } else {
+          std::cout << std::endl;
+          std::cout << METAL_LOG_HEADER << "Error: Used a neighbor list without a cutoff. ";
+          std::cout << METAL_LOG_HEADER << "Quitting now." << std::endl;
+          exit(7);
+        }
       } else {
         std::cout << std::endl;
         std::cout << METAL_LOG_HEADER << "Error: Invalid option for ";
