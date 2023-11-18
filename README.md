@@ -243,13 +243,13 @@ Very long tests:
 
 Releases:
 - v1.0.0
+  - OpenMM 8.0.0
   - Initial release, bringing proper support for Mac GPUs
 - v1.1.0
-  - Several incremental optimizations from the OpenMM main branch
+  - OpenMM 8.1.0
   - AMD and Intel go into long-term service
+  - Remove "HIP" platform name workaround, introduce "Metal"
   - Remove double and mixed precision
-- v2.0.0
-  - Replace the OpenCL dependency with Metal C++
 
 ## License
 
