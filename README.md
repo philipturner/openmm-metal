@@ -250,6 +250,9 @@ Releases:
   - AMD and Intel go into long-term service
   - Remove "HIP" platform name workaround, introduce "Metal"
   - Remove double and mixed precision
+- v1.2.0
+  - OpenMM 8.2.0
+  - https://github.com/openmm/openmm/pull/4346
 
 ## License
 
