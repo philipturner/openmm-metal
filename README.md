@@ -253,6 +253,7 @@ Releases:
 - v1.2.0
   - OpenMM 8.2.0
   - https://github.com/openmm/openmm/pull/4346
+  - https://github.com/openmm/openmm/pull/4348
 
 ## License
 
