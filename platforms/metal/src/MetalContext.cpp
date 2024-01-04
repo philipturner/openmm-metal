@@ -1018,11 +1018,12 @@ double MetalContext::reduceEnergy() {
     executeKernel(reduceEnergyKernel, workGroupSize*energySum.getSize(), workGroupSize);
     energySum.download(pinnedMemory);
   
-    float energy = 0;
+    double energy64 = 0;
     for (int i = 0; i < reduceEnergyThreadgroups; ++i) {
-      energy += ((float*)pinnedMemory)[i];
+      float energy32 = ((float*)pinnedMemory)[i];
+      energy64 += (double)energy32;
     }
-    return energy;
+    return energy64;
 }
 
 void MetalContext::setCharges(const vector<double>& charges) {

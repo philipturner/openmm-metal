@@ -20,6 +20,9 @@ In Finder, create an empty folder and right-click it. Select `New Terminal at Fo
 ```bash
 conda install -c conda-forge openmm
 git clone https://github.com/openmm/openmm
+cd openmm && git fetch && git checkout 8.1_branch
+
+cd ../
 git clone https://github.com/philipturner/openmm-metal
 cd openmm-metal
 
@@ -123,6 +126,8 @@ Scaling behavior (Water Box, Amber Forcefield, No Cutoff):
 | 774   | ~65 µs        | 9 µs  | 7 µs  | -     | -     |
 | 2661  | ~65 µs        | 9 µs  | 7 µs  | -     | -     |
 | 4158  | ~65 µs        | 9 µs  | 7 µs  | 6 µs  | 6 µs  |
+
+You can increase the precision of energy measurements by setting `METAL_REDUCE_ENERGY_THREADGROUPS` to a very large number. Ideally, the number of threadgroups is proportional to the number of atoms.
 
 ### Scaling
 

@@ -99,9 +99,12 @@ f = open("python_messaging.txt", "w")
 f.write(message)
 f.close()
 ' > "python_script.py"
-python3 python_script.py
+python python_script.py
 
 if [[ "success" != `cat python_messaging.txt` ]]; then
+  # If this fails, try replacing 'python python_script.py' with 'python3
+  # python_script.py'. The last one was what worked originally. Now, the first
+  # one works and the last one doesn't.
   echo "OpenMM not installed."
   exit -1
 fi
@@ -114,7 +117,7 @@ f = open("python_messaging.txt", "w")
 f.write(openmm.version.version)
 f.close()
 ' > "python_script.py"
-python3 python_script.py
+python python_script.py
 
 openmm_version=`cat python_messaging.txt`
 old_IFS=$IFS
@@ -152,7 +155,7 @@ f = open("python_messaging.txt", "w")
 f.write(path)
 f.close()
 ' > "python_script.py"
-python3 python_script.py
+python python_script.py
 
 openmm_parent_dir=`cat python_messaging.txt`
 openmm_lib_dir="${openmm_parent_dir}/lib"
