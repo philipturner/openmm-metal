@@ -127,7 +127,7 @@ Scaling behavior (Water Box, Amber Forcefield, No Cutoff):
 | 2661  | ~65 µs        | 9 µs  | 7 µs  | -     | -     |
 | 4158  | ~65 µs        | 9 µs  | 7 µs  | 6 µs  | 6 µs  |
 
-You can increase the precision of energy measurements by setting `METAL_REDUCE_ENERGY_THREADGROUPS` to a very large number. Ideally, the number of threadgroups is proportional to the number of atoms.
+You can increase the precision of energy measurements by setting `METAL_REDUCE_ENERGY_THREADGROUPS` to a very large number. The GPU splits the energy into a large number of partial sums, which the CPU casts from FP32 -> FP64 and accumulates in mixed precision. An improvement in energy conservation has not yet been observed, because the tested system was too small to occupy many threadgroups. It is theorized to take effect with very large systems.
 
 ### Scaling
 
