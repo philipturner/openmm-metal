@@ -1,17 +1,10 @@
 # OpenMM Metal Plugin
 
-This plugin adds the Metal platform that accelerates [OpenMM](https://openmm.org) on Metal 3 GPUs. It supports Apple, AMD, and Intel GPUs running macOS Ventura or higher. The current implementation uses Apple's OpenCL compatiblity layer (`cl2Metal`) to translate OpenCL kernels to AIR. It focuses on patches for OpenMM's code base that improve performance on macOS. The plugin makes the patches easily accessible to most users, who would otherwise wait for them to be upstreamed. It also adds optimizations for Intel Macs that cannot be upstreamed into the main code base, for various reasons.
-
-The Metal plugin may transition to using the Metal API directly. This would provide greater control over the CPU-side command encoding process, solving a long-standing latency bottleneck for 1000-atom systems. However, it removes mixed and double precision on Intel Macs. <b>FP64 emulation is proven to work on Apple silicon, but is not a priority for molecular dynamics.</b> A backward-compatible OpenCL compilation path may or may not be maintained.
+This plugin adds the Metal platform that accelerates [OpenMM](https://openmm.org) on Metal 3 GPUs. It supports Apple, AMD, and Intel GPUs running macOS Ventura or higher. The plugin uses Apple's OpenCL compatiblity layer (`cl2Metal`) to translate OpenCL kernels to AIR.
 
 Vendors:
 - Apple Mac GPUs are supported in current and future releases.
-- Apple iOS GPUs are not working yet, but running on iOS is an end goal.
 - AMD and Intel GPUs are in long-term service mode. The v1.0.0 tag on GitHub works, but newer versions are failing tests on Intel Macs.
-
-## Performance
-
-Expect a 2-4x speedup for large simulations.
 
 ## Usage
 
