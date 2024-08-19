@@ -238,6 +238,8 @@ DECLARE_REDUCTION_BASE(prefix_exclusive_sum)
 DECLARE_REDUCTION_BASE(min)
 DECLARE_REDUCTION_BASE(max)
 
+#if 0
+
 DECLARE_REDUCTION_BASE(product)
 DECLARE_REDUCTION_BASE(prefix_inclusive_product)
 DECLARE_REDUCTION_BASE(prefix_exclusive_product)
@@ -254,6 +256,8 @@ DECLARE_SHUFFLE_BASE(shuffle_up)
 DECLARE_SHUFFLE_BASE(shuffle_down)
 DECLARE_SHUFFLE_BASE(shuffle_rotate_up)
 DECLARE_SHUFFLE_BASE(shuffle_rotate_down)
+
+#endif
 
 EXPOSE_FUNCTION_I_ARGS_3(ctz)
 
@@ -276,6 +280,8 @@ DECLARE_REDUCTION_UNIFORM(prefix_exclusive_sum, scan_exclusive_add)
 DECLARE_REDUCTION_UNIFORM(min, reduce_min)
 DECLARE_REDUCTION_UNIFORM(max, reduce_max)
 
+#if 0
+
 DECLARE_SHUFFLE_UNIFORM(shuffle, shuffle)
 DECLARE_SHUFFLE_UNIFORM(shuffle_xor, shuffle_xor)
 DECLARE_SHUFFLE_UNIFORM(shuffle_up, shuffle_up)
@@ -284,6 +290,8 @@ DECLARE_SHUFFLE_UNIFORM(shuffle_rotate_down, rotate)
 
 DECLARE_SHUFFLE_UNIFORM(broadcast, broadcast)
 DECLARE_REDUCTION_UNIFORM(broadcast_first, broadcast_first)
+
+#endif
 
 #define DECLARE_I_REDUCTION_NON_UNIFORM(METAL_OP, OPENCL_OP) \
 BRIDGE_FUNCTION_I_ARGS_1(simd_##METAL_OP, sub_group_non_uniform_##OPENCL_OP) \
@@ -297,6 +305,8 @@ DECLARE_F_REDUCTION_NON_UNIFORM(METAL_OP, OPENCL_OP) \
 
 #define DECLARE_SHUFFLE_NON_UNIFORM(METAL_OP, OPENCL_OP) \
 BRIDGE_FUNCTION_ARGS_2(simd_##METAL_OP, sub_group_non_uniform_##OPENCL_OP) \
+
+#if 0
 
 DECLARE_REDUCTION_NON_UNIFORM(sum, reduce_add)
 DECLARE_REDUCTION_NON_UNIFORM(prefix_inclusive_sum, scan_inclusive_add)
@@ -312,6 +322,8 @@ DECLARE_I_REDUCTION_NON_UNIFORM(or, reduce_or)
 DECLARE_I_REDUCTION_NON_UNIFORM(xor, reduce_xor)
 
 DECLARE_SHUFFLE_NON_UNIFORM(broadcast, broadcast)
+
+#endif
 
 #define DECLARE_I_REDUCTION_CLUSTERED(METAL_OP, OPENCL_OP) \
 BRIDGE_FUNCTION_CLUSTERED_I_ARGS_1(METAL_OP, sub_group_clustered_##OPENCL_OP) \
@@ -344,6 +356,8 @@ DECLARE_F_REDUCTION_CLUSTERED(METAL_OP, OPENCL_OP) \
 #define DECLARE_SHUFFLE_CLUSTERED(METAL_OP, OPENCL_OP) \
 BRIDGE_FUNCTION_CLUSTERED_ARGS_2(METAL_OP, sub_group_clustered_##OPENCL_OP) \
 
+#if 0
+
 DECLARE_REDUCTION_CLUSTERED(sum, reduce_add)
 DECLARE_REDUCTION_CLUSTERED(min, reduce_min)
 DECLARE_REDUCTION_CLUSTERED(max, reduce_max)
@@ -358,6 +372,8 @@ DECLARE_B_REDUCTION_CLUSTERED(xor)
 
 DECLARE_SHUFFLE_CLUSTERED(shuffle_rotate_down, rotate)
 
+#endif
+
 #define EXPOSE_BALLOT(FUNC_EXPR, IN_EXPR, OUT_EXPR, AIR_EXPR) \
 __attribute__((__overloadable__)) OUT_EXPR FUNC_EXPR(IN_EXPR) \
   __asm("air." #FUNC_EXPR #AIR_EXPR); \
@@ -368,11 +384,15 @@ EXPOSE_BALLOT(simd_any, bool expr, bool, )
 EXPOSE_BALLOT(simd_ballot, bool expr, ulong, .i64)
 EXPOSE_BALLOT(simd_active_threads_mask, , ulong, .i64)
 
+#if 0
+
 EXPOSE_BALLOT(quad_is_first, , bool, )
 EXPOSE_BALLOT(quad_all, bool expr, bool, )
 EXPOSE_BALLOT(quad_any, bool expr, bool, )
 EXPOSE_BALLOT(quad_ballot, bool expr, ushort, )
 EXPOSE_BALLOT(quad_active_threads_mask, , ushort, )
+
+#endif
 
 int sub_group_elect() {
   return select(0, 1, simd_is_first());
@@ -399,6 +419,8 @@ uint4 sub_group_ballot(int predicate) {
   output.x = simd_ballot(predicate != 0);
   return output;
 }
+
+#if 0
 
 // WARNING: For SIMD-scoped barriers, Metal and OpenCL have different
 // enumeration constants for the memory flags.
@@ -462,6 +484,8 @@ void sub_group_barrier(cl_mem_fence_flags flags)
   }
   simdgroup_barrier(metal_mem_flags);
 }
+
+#endif
 
 #undef EXPOSE_FUNCTION_OVERLOAD_ARGS_1
 #undef EXPOSE_FUNCTION_OVERLOAD_ARGS_2
