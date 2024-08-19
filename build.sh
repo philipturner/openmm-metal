@@ -175,7 +175,9 @@ elif [[ $run_quick_tests == true ]]; then
 else
   build_tests_flags="-DOPENMM_BUILD_OPENCL_TESTS=0"
 fi
-cmake .. -DCMAKE_INSTALL_PREFIX="/usr/local/openmm" \
+cmake .. \
+  -DCMAKE_OSX_ARCHITECTURES=arm64 \
+  -DCMAKE_INSTALL_PREFIX="/usr/local/openmm" \
   -DOPENMM_DIR=${openmm_parent_dir} \
   ${build_tests_flags} \
 
