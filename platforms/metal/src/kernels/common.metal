@@ -105,47 +105,18 @@ inline long realToFixedPoint(real x) {
 
 #ifdef VENDOR_APPLE
 
-//
-//  metal_stdlib.h
-//  OpenCL Metal Stdlib
-//
-//  Created by Philip Turner on 2/26/23.
-//
+// Count trailing zeroes instruction (Int32)
 
-#ifndef metal_stdlib_h
-#define metal_stdlib_h
+__attribute__((__overloadable__)) 
+int ___metal_ctz(int data, bool unknown)
+  __asm("air.ctz.i32");
 
-#define EXPOSE_FUNCTION_OVERLOAD_ARGS_1(EXPR, C_TYPE, AIR_TYPE) \
-__attribute__((__overloadable__)) C_TYPE EXPR(C_TYPE data) \
-  __asm("air." #EXPR "." #AIR_TYPE); \
+__attribute__((__overloadable__)) 
+int ctz(int x) {
+  return ___metal_ctz(x, false);
+}
 
-#define EXPOSE_FUNCTION_OVERLOAD_ARGS_3(EXPR, C_TYPE, AIR_TYPE) \
-__attribute__((__overloadable__)) C_TYPE ___metal_##EXPR(C_TYPE data, bool unknown) \
-  __asm("air." #EXPR "." #AIR_TYPE); \
-\
-__attribute__((__overloadable__)) C_TYPE EXPR(C_TYPE x) { \
-  return ___metal_##EXPR(x, false); \
-} \
-
-#define BRIDGE_FUNCTION_OVERLOAD_ARGS_1(METAL_EXPR, OPENCL_EXPR, C_TYPE) \
-__attribute__((__overloadable__)) \
-C_TYPE OPENCL_EXPR(C_TYPE x) { \
-  return METAL_EXPR(x); \
-} \
-
-#define EXPOSE_FUNCTION_I_ARGS_1(EXPR) \
-EXPOSE_FUNCTION_OVERLOAD_ARGS_1(EXPR, int, s.i32) \
-EXPOSE_FUNCTION_OVERLOAD_ARGS_1(EXPR, uint, u.i32) \
-
-
-#define EXPOSE_FUNCTION_I_ARGS_3(EXPR) \
-EXPOSE_FUNCTION_OVERLOAD_ARGS_3(EXPR, int, i32) \
-EXPOSE_FUNCTION_OVERLOAD_ARGS_3(EXPR, uint, i32) \
-
-// Declarations
-
-
-EXPOSE_FUNCTION_I_ARGS_3(ctz)
+// SIMD sum instruction (Float32)
 
 __attribute__((__overloadable__))
 float simd_sum(float data)
@@ -156,7 +127,7 @@ float sub_group_reduce_add(float x) {
   return simd_sum(x);
 }
 
-
+// SIMD ballot instruction (Int32)
 
 #define EXPOSE_BALLOT(FUNC_EXPR, IN_EXPR, OUT_EXPR, AIR_EXPR) \
 __attribute__((__overloadable__)) OUT_EXPR FUNC_EXPR(IN_EXPR) \
@@ -193,7 +164,5 @@ uint4 sub_group_ballot(int predicate) {
   output.x = simd_ballot(predicate != 0);
   return output;
 }
-
-#endif /* metal_stdlib_h */
 
 #endif // VENDOR_APPLE
