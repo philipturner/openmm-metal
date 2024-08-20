@@ -752,6 +752,10 @@ cl::Program MetalContext::createProgram(const string source, const char* optimiz
 
 cl::Program MetalContext::createProgram(const string source, const map<string, string>& defines, const char* optimizationFlags) {
     string options = (optimizationFlags == NULL ? defaultOptimizationOptions : string(optimizationFlags));
+    
+    // Suppress the compiler warnings that flood the console.
+    options = options + std::string(" -w");
+    
     stringstream src;
     if (!options.empty())
         src << "// Compilation Options: " << options << endl << endl;
