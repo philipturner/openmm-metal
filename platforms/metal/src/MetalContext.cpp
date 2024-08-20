@@ -146,7 +146,7 @@ MetalContext::MetalContext(const System& system, int platformIndex, int deviceIn
               exit(9);
             }
           } else {
-            this->reduceEnergyThreadgroups = 1;
+            this->reduceEnergyThreadgroups = 1024;
           }
     
     if (precision == "single") {

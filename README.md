@@ -99,13 +99,13 @@ unset OPENMM_METAL_PROFILE_KERNELS # accepted, does not profile
 
 ### Reducing Energy
 
-By default, energy summation is serialized among a single threadgroup. The `reduceEnergy` kernel consumes a significant proportion of execution time for small systems. You can make reduction occur across more than one threadgroup with the following variable. Note that this typically speeds up small systems and slows down large systems.
+By default, energy summation is serialized among a single threadgroup. The `reduceEnergy` kernel consumes a significant proportion of execution time for small systems. You can make reduction occur across more than one threadgroup with the following variable.
 
 ```
 export OPENMM_METAL_REDUCE_ENERGY_THREADGROUPS=1 # accepted, 1 threadgroup used
 export OPENMM_METAL_REDUCE_ENERGY_THREADGROUPS=3 # accepted, 3 threadgroups used
 export OPENMM_METAL_REDUCE_ENERGY_THREADGROUPS=-1 # runtime crash
-unset OPENMM_METAL_REDUCE_ENERGY_THREADGROUPS # accepted, 1 threadgroup used
+unset OPENMM_METAL_REDUCE_ENERGY_THREADGROUPS # accepted, 1024 threadgroups used
 ```
 
 Scaling behavior (Water Box, Amber Forcefield, No Cutoff):
@@ -121,6 +121,10 @@ Scaling behavior (Water Box, Amber Forcefield, No Cutoff):
 | 4158  | ~65 µs        | 9 µs  | 7 µs  | 6 µs  | 6 µs  |
 
 You can increase the precision of energy measurements by setting `METAL_REDUCE_ENERGY_THREADGROUPS` to a very large number. The GPU splits the energy into a large number of partial sums, which the CPU casts from FP32 -> FP64 and accumulates in mixed precision. An improvement in energy conservation has not yet been observed, because the tested system was too small to occupy many threadgroups. It is theorized to take effect with very large systems.
+
+A recent study proved there is a ~4x reduction in standard deviation of singlepoint energies, provided a massive number of threadgroups is used. In addition the latency appeared to remain at 6 µs in Perfetto. Even with 1024 threadgroups dispatched, the execution time of `reduceEnergy` was about 1/1000 of the time spent computing forces. In light of this study, the default parameter for `OPENMM_METAL_REDUCE_ENERGY_THREADGROUPS` was changed from 1 to 1024.
+
+https://gist.github.com/philipturner/20df5482f75b07d91466b972a1a46cd5
 
 ### Scaling
 
