@@ -89,18 +89,23 @@ MetalNonbondedUtilities::MetalNonbondedUtilities(MetalContext& context) : contex
     
     {
       std::string vendor = context.getDevice().getInfo<CL_DEVICE_VENDOR>();
-      if (vendor.size() >= 5 && vendor.substr(0, 5) == "Apple") {
-        this->useLargeBlocks = true;
-      } else {
-        this->useLargeBlocks = false;
-      }
-      
+      // The large-blocks path relies on simd_ballot() (findInteractingBlocks.metal,
+      // the USE_LARGE_BLOCKS branch), which is a Metal SIMD-group intrinsic that the
+      // current cl2Metal compiler cannot bind. Keep it disabled until that intrinsic
+      // is available again; the standard 32-wide path remains correct without it.
+      this->useLargeBlocks = false;
+
       char *overrideUseLargeBlocks = getenv("OPENMM_METAL_USE_LARGE_BLOCKS");
       if (overrideUseLargeBlocks != nullptr) {
         if (strcmp(overrideUseLargeBlocks, "0") == 0) {
           this->useLargeBlocks = false;
         } else if (strcmp(overrideUseLargeBlocks, "1") == 0) {
-          this->useLargeBlocks = true;
+          // Large blocks are currently unavailable (see above). Warn instead of
+          // forcing the option on, which would fail to compile the kernel.
+          std::cout << METAL_LOG_HEADER << "Warning: 'OPENMM_METAL_USE_LARGE_BLOCKS=1' ";
+          std::cout << "is currently unsupported on Metal (requires simd_ballot); ";
+          std::cout << "large blocks remain disabled." << std::endl;
+          this->useLargeBlocks = false;
         } else {
           std::cout << std::endl;
           std::cout << METAL_LOG_HEADER << "Error: Invalid option for ";

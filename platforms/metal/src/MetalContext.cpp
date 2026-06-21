@@ -308,7 +308,15 @@ MetalContext::MetalContext(const System& system, int platformIndex, int deviceIn
         if (vendor.size() >= 5 && vendor.substr(0, 5) == "Apple") {
             simdWidth = 32;
             numThreadBlocksPerComputeUnit = 12;
-            compilationDefines["VENDOR_APPLE"] = "";
+            // VENDOR_APPLE selects the Metal SIMD-group ("warp") intrinsic code
+            // paths in common.metal, utilities.metal, and findInteractingBlocks.metal.
+            // Those paths bind Metal intrinsics through __asm("air.*") labels, which
+            // the current cl2Metal compiler rejects ("illegal string literal in 'asm'"),
+            // and the device exposes only OpenCL 1.2 with no cl_khr_subgroups fallback.
+            // Until a working intrinsic binding is found, leave VENDOR_APPLE undefined
+            // so the kernels use their portable local-memory fallbacks, which compile
+            // and run correctly on Apple's 32-wide lockstep SIMD groups.
+            // compilationDefines["VENDOR_APPLE"] = "";
         }
         else if (vendor.size() >= 5 && vendor.substr(0, 5) == "Intel" && device.getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_GPU) {
             // TODO: Test whether 16 or 32 is faster on Intel Mac mini.
